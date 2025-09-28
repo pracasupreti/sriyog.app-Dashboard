@@ -33,6 +33,7 @@ import {
   flexRender,
   ColumnDef,
 } from "@tanstack/react-table";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Example data type
 type Professional = {
@@ -1062,17 +1063,17 @@ export default function WaitingProfessionalsTable() {
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="border border-red-800 text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 rounded px-2 py-1 text-sm font-medium hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
+            className="border border-red-800 rounded-lg w-8 h-8 flex items-center justify-center text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
             aria-label="Previous page"
           >
-            &#8249;
+           <ChevronLeft className="w-3 h-3"/>
           </button>
           {getPageNumbers(pageIndex + 1, pageCount).map((num, idx) =>
             typeof num === "number" ? (
               <button
                 key={`page-${idx}-${num}`}
                 onClick={() => table.setPageIndex(num - 1)}
-                className={`border rounded px-2 py-1 text-sm font-medium transition-colors duration-150 ${
+                className={`border rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium transition-colors duration-150 ${
                   pageIndex + 1 === num
                     ? "bg-red-800 text-white border-red-800 dark:bg-red-700 dark:border-red-600"
                     : "bg-white text-red-800 border-red-800 hover:bg-red-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -1090,10 +1091,10 @@ export default function WaitingProfessionalsTable() {
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="border border-red-800 text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 rounded px-2 py-1 text-sm font-medium hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
+            className="border border-red-800 text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
             aria-label="Next page"
           >
-            &#8250;
+            <ChevronRight className="w-3 h-3"/>
           </button>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 md:mt-0">
