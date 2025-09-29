@@ -1045,7 +1045,7 @@ export default function WaitingProfessionalsTable() {
               </tr>
             ) : (
               table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="bg-red-100 dark:bg-red-950">
+                <tr key={row.id} className="bg-red-100  dark:bg-gray-600 dark:text-white">
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id} className="px-2 md:px-3 py-2 whitespace-nowrap">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
