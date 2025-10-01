@@ -67,13 +67,6 @@ type Professional = {
   updatedAt: string;
 };
 
-// API Response type
-interface ApiResponse {
-  success?: boolean;
-  data?: Professional[];
-  message?: string;
-}
-
 // API function
 const fetchWaitingProfessionals = async (): Promise<Professional[]> => {
   try {
@@ -95,13 +88,15 @@ const fetchWaitingProfessionals = async (): Promise<Professional[]> => {
     }
     console.log('⚠️ Unexpected data structure:', response.data);
     return [];
-  } catch (error:any) {
+  } catch (error: unknown) {
     console.error('❌ Failed to fetch waiting professionals:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorResponse = error && typeof error === 'object' && 'response' in error ? error.response : null;
     console.error('❌ Error details:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data
+      message: errorMessage,
+      status: errorResponse && typeof errorResponse === 'object' && 'status' in errorResponse ? errorResponse.status : undefined,
+      statusText: errorResponse && typeof errorResponse === 'object' && 'statusText' in errorResponse ? errorResponse.statusText : undefined,
+      data: errorResponse && typeof errorResponse === 'object' && 'data' in errorResponse ? errorResponse.data : undefined
     });
     throw error;
   }

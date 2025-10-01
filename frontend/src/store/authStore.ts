@@ -58,13 +58,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         toast.error(response.data.message,{id:'login_error'});
         return { success: false, message: response.data.message };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       set({ isLoading: false });
-        toast.error(error.response?.data?.message || 'Login failed',{id:'login_error'});
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response !== null &&
+        'data' in error.response && typeof error.response.data === 'object' && 
+        error.response.data !== null && 'message' in error.response.data 
+        ? String(error.response.data.message) 
+        : 'Login failed';
+      toast.error(errorMessage, {id:'login_error'});
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+        message: errorMessage
       };
     }
   },

@@ -32,6 +32,7 @@
 // }
 "use client";
 import { useAuthStore } from "@/store/authStore";
+import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -58,7 +59,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     // Redirect happens in useEffect above, so just return null here
-    return null;
+    return (
+      <div className="h-screen w-full bg-red-200">
+        <Loader className="w-12 h-12 animatespin" />
+      </div>
+    )
   }
 
   return <>{children}</>;
