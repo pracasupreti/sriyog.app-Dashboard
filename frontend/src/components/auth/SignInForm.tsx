@@ -1,9 +1,37 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { LogIn } from "lucide-react";
+import { Loader, LogIn } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 	const SignInForm = () => {
 		const [showPassword, setShowPassword] = useState(false);
+		const [password, setPassword] = useState('');
+		const [email, setEmail] = useState('');
+		const [isSubmitting, setIsSubmitting] = useState(false);
+		const { login, isLoading } = useAuthStore();
+		const router = useRouter();
+
+		const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+			e.preventDefault();
+			setIsSubmitting(true);
+			
+			try {
+				const result = await login(email, password);
+				if (result.success) {
+					// Keep loading state active during redirect
+					router.replace("/");
+					// Don't set isSubmitting to false here - let it stay true during redirect
+				} else {
+					setIsSubmitting(false);
+				}
+			} catch (error) {
+				setIsSubmitting(false);
+			}
+		}
+
+		// Show loading state if either the auth store is loading OR we're in the middle of submitting/redirecting
+		const showLoading = isLoading || isSubmitting;
 		return (
 			<div className="min-h-screen w-full flex items-center justify-center ">
 				<div className="w-full max-w-sm bg-white rounded-xl shadow-md p-6 sm:p-8 flex flex-col items-center" style={{ minWidth: 320 }}>
@@ -18,7 +46,7 @@ import { LogIn } from "lucide-react";
 				</div>
 				<h2 className="text-lg font-bold text-center mb-1">Admin Login</h2>
 				<p className="text-center text-gray-600 mb-4 text-sm">Sign in to SRIYOG App Dashboard</p>
-							<form className="w-full">
+							<form className="w-full" onSubmit={handleSubmit}>
 								<div className="mb-4">
 									<label className="text-gray-700 font-medium mb-1 flex items-center gap-2">
 							<span>
@@ -29,6 +57,8 @@ import { LogIn } from "lucide-react";
 						<input
 							type="email"
 							placeholder="Enter your admin eMail"
+							onChange={(e)=>setEmail(e.target.value)}
+							value={email}
 							className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B1C1C]"
 							required
 						/>
@@ -45,6 +75,8 @@ import { LogIn } from "lucide-react";
 								type={showPassword ? "text" : "password"}
 								placeholder="Enter your Security Key"
 								className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B1C1C] pr-10"
+								onChange={(e)=>setPassword(e.target.value)}
+								value={password}
 								required
 							/>
 							<span
@@ -68,10 +100,11 @@ import { LogIn } from "lucide-react";
 					<div className="flex item-center justify-end">
 						<button
 						type="submit"
-						className="w-fit flex items-center justify-end px-4 gap-2 bg-[#8B1C1C] hover:bg-[#a83232] text-white font-semibold py-2 rounded-lg text-base transition-colors mb-1"
+						disabled={showLoading}
+						className="w-fit flex items-center justify-end px-4 gap-2 bg-[#8B1C1C] hover:bg-[#a83232] disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg text-base transition-colors mb-1 disabled:cursor-not-allowed"
 					>
-						<LogIn className="w-5 h-5"/>
-						Login
+						{showLoading ? <Loader className="w-5 h-5 animate-spin"/> : <LogIn className="w-5 h-5"/>}
+						{showLoading ? 'Signing in...' : 'Login'}
 					</button>
 					</div>
 

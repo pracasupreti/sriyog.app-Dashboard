@@ -94,7 +94,7 @@ export const Login = async (req, res) => {
       await storeRefreshToken(user._id, refreshToken);
       setCookies(res, accessToken, refreshToken);
       res.status(200).json({
-        succes:true,
+        success:true,
         accessToken,
       refreshToken,
       user:{

@@ -4,6 +4,8 @@ import './globals.css';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { Metadata } from 'next';
+import AuthProvider from '@/components/providers/AuthProvider';
+import { Toaster } from 'react-hot-toast';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -33,8 +35,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} dark:bg-gray-900`}>
+        <Toaster position='top-right' />
         <ThemeProvider>
-          <SidebarProvider>{children}</SidebarProvider>
+          <SidebarProvider>
+            <AuthProvider>
+            {children}
+            </AuthProvider>
+            </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>
