@@ -1,4 +1,16 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axiosInstance from "@/lib/axios";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  ColumnDef,
+} from "@tanstack/react-table";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import Link from "next/link";
+
 // Simple, ACTUALLY bulletproof pagination helper
 function getPageNumbers(current: number, total: number) {
   const pages: (number | string)[] = [];
@@ -25,947 +37,120 @@ function getPageNumbers(current: number, total: number) {
 
   return pages;
 }
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  flexRender,
-  ColumnDef,
-} from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// Example data type
+// Updated data type based on API response
 type Professional = {
-  id: number;
-  name: string;
-  city: string;
-  profession: string;
-  submittedDate: string;
-  gender: string;
-  headshot: string;
+  _id: string;
+  "First Name": string;
+  "Middle Name": string;
+  "Last Name": string;
+  Phone: string;
+  Profession: string;
+  Gender: string;
+  province: string;
+  district: string;
+  City: string;
+  ward: string;
+  Area: string;
+  referredBy: string;
+  dateOfBirth: string;
+  bloodGroup: string | null;
+  maritalStatus: string | null;
+  idType: string;
+  Headshot: string;
+  idUpload: string;
+  "User Type": string;
+  "Active in App": string;
+  "User Status": string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
-// Example data (replace with your API data) - Each entry must have unique ID
-const data: Professional[] = [
-  {
-    id: 1,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 2,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 3,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 4,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 5,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 6,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 7,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 8,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 9,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 10,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 11,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 12,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 13,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 14,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 15,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 16,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 17,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 18,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 19,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 20,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 21,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 22,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 23,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 24,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 25,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 26,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 27,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 28,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 29,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 30,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 31,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 32,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 33,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 34,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 35,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 36,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 37,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 38,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 39,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 40,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 41,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 42,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 43,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 44,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 45,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 46,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 47,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 48,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 49,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 50,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 51,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 52,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 53,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 54,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 55,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 56,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 57,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 58,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 59,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 60,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 61,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 62,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 63,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 64,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 65,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 66,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 67,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 68,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 69,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 70,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 71,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 72,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 73,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 74,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 75,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 76,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 77,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 78,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 79,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 80,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 81,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 82,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 83,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 84,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 85,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 86,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 87,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 88,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 89,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 90,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 91,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 92,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 93,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 94,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 95,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 96,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 97,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 98,
-    name: "Prajwol Shrestha",
-    city: "Kathmandu",
-    profession: "Designer",
-    submittedDate: "11 Sept 2057",
-    gender: "Male",
-    headshot: "/images/defaultlogo.png",
-  },
-  {
-    id: 99,
-    name: "Lasta Pudasaini",
-    city: "Bhaktapur",
-    profession: "Photographer",
-    submittedDate: "11 Sept 2025",
-    gender: "Female",
-    headshot: "/images/logo.svg",
-  },
-  {
-    id: 100,
-    name: "Yamuna Ghimire",
-    city: "Kathmandu",
-    profession: "Devotee Singer",
-    submittedDate: "11 Sept 2067",
-    gender: "Female",
-    headshot: "/images/defaultlogo.png",
+// API Response type
+interface ApiResponse {
+  success?: boolean;
+  data?: Professional[];
+  message?: string;
+}
+
+// API function
+const fetchWaitingProfessionals = async (): Promise<Professional[]> => {
+  try {
+    console.log('🚀 Fetching from:', axiosInstance.defaults.baseURL + '/professionaluser/waiting');
+    const response = await axiosInstance.get('/professionaluser/waiting');
+    console.log('✅ API Response:', response);
+    console.log('📊 Response data:', response.data);
+    
+    // Handle different response structures
+    if (Array.isArray(response.data)) {
+      console.log('📦 Data is direct array, length:', response.data.length);
+      return response.data;
+    } else if (response.data.data && Array.isArray(response.data.data)) {
+      console.log('📦 Data is nested in data property, length:', response.data.data.length);
+      return response.data.data;
+    } else if (response.data.success && Array.isArray(response.data.data)) {
+      console.log('📦 Data has success wrapper, length:', response.data.data.length);
+      return response.data.data;
+    }
+    console.log('⚠️ Unexpected data structure:', response.data);
+    return [];
+  } catch (error:any) {
+    console.error('❌ Failed to fetch waiting professionals:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    throw error;
   }
-];
+};
 
 // Column definitions
 const columns: ColumnDef<Professional>[] = [
-  { accessorKey: "id", header: "Waiting ID" },
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "city", header: "City" },
-  { accessorKey: "profession", header: "Profession" },
-  { accessorKey: "submittedDate", header: "Submitted Date" },
-  { accessorKey: "gender", header: "Gender" },
+  { 
+    accessorKey: "_id", 
+    header: "Waiting ID",
+    cell: info => {
+      const id = info.getValue() as string;
+      return id.substring(id.length - 6); // Show last 6 characters of ObjectId
+    }
+  },
+  { 
+    accessorKey: "First Name", 
+    header: "Name",
+    cell: info => {
+      const row = info.row.original;
+      return `${row["First Name"]} ${row["Middle Name"] || ""} ${row["Last Name"]}`.trim();
+    }
+  },
+  { accessorKey: "City", header: "City" },
+  { accessorKey: "Profession", header: "Profession" },
+  { 
+    accessorKey: "createdAt", 
+    header: "Submitted Date",
+    cell: info => {
+      const date = new Date(info.getValue() as string);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  },
+  { accessorKey: "Gender", header: "Gender" },
   {
-    accessorKey: "headshot",
+    accessorKey: "Headshot",
     header: "Headshot",
     cell: info => (
       <img
         src={info.getValue() as string}
         alt="headshot"
-        className="w-8 h-8 rounded-full mx-auto"
+        className="w-8 h-8 rounded-full mx-auto object-cover"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = "/images/defaultlogo.png";
+        }}
       />
     ),
   },
@@ -973,17 +158,66 @@ const columns: ColumnDef<Professional>[] = [
     id: "action",
     header: "Action",
     cell: () => (
-      <button className="text-red-500 hover:text-red-700">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M6 6l8 8M6 14L14 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
+      <button className="bg-primary hover:bg-red-700  transition-colors duration-300 p-2 rounded-full">
+       <Link href='/waiting-professional'>
+      <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="15"
+    height="16"
+    viewBox="0 0 15 16"
+    fill="none"
+  >
+    <path
+      d="M9.375 7.80768C9.375 8.30496 9.17746 8.78187 8.82583 9.1335C8.47419 9.48513 7.99728 9.68268 7.5 9.68268C7.00272 9.68268 6.52581 9.48513 6.17417 9.1335C5.82254 8.78187 5.625 8.30496 5.625 7.80768C5.625 7.3104 5.82254 6.83348 6.17417 6.48185C6.52581 6.13022 7.00272 5.93268 7.5 5.93268C7.99728 5.93268 8.47419 6.13022 8.82583 6.48185C9.17746 6.83348 9.375 7.3104 9.375 7.80768Z"
+      stroke="white"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M1.25 7.80768C2.25 5.24705 4.585 3.43268 7.5 3.43268C10.415 3.43268 12.75 5.24705 13.75 7.80768C12.75 10.3683 10.415 12.1827 7.5 12.1827C4.585 12.1827 2.25 10.3683 1.25 7.80768Z"
+      stroke="white"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+       </Link>
       </button>
     ),
   },
 ];
 
 export default function WaitingProfessionalsTable() {
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  // State management
+  const [data, setData] = useState<Professional[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  // Fetch data function
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const professionals = await fetchWaitingProfessionals();
+      setData(professionals);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      console.error('Error loading data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Table setup
   const table = useReactTable({
     data,
     columns,
@@ -999,21 +233,69 @@ export default function WaitingProfessionalsTable() {
   const pageSize = table.getState().pagination.pageSize;
   const totalRows = table.getFilteredRowModel().rows.length;
 
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2">
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="text-center">
+          <div className="text-red-500 dark:text-red-400 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Failed to load data</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={loadData}
+            className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 ">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2">
       {/* Search bar */}
       <div className="mb-4 flex flex-col sm:flex-row gap-2">
         <input
           value={globalFilter ?? ""}
           onChange={e => setGlobalFilter(e.target.value)}
-          placeholder="Search"
-          className="border rounded px-3 py-2 w-full sm:w-1/3 dark:text-white"
+          placeholder="Search professionals..."
+          className="border rounded px-3 py-2 w-full sm:w-1/3 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
-        {/* Add dropdowns for filters here if needed */}
+        <button
+          onClick={loadData}
+          className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh
+        </button>
       </div>
+
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-separate border-spacing-y-2 text-sm md:text-base">
+      <div className="overflow-x-auto max-w-full" >
+        <div className="min-w-max">
+          <table className="w-full border-separate border-spacing-y-2 text-sm md:text-base">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id} className="bg-red-900 text-white">
@@ -1045,7 +327,7 @@ export default function WaitingProfessionalsTable() {
               </tr>
             ) : (
               table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="bg-red-100  dark:bg-gray-600 dark:text-white">
+                <tr key={row.id} className="bg-red-100 dark:bg-gray-600 dark:text-white">
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id} className="px-2 md:px-3 py-2 whitespace-nowrap">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1056,7 +338,9 @@ export default function WaitingProfessionalsTable() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
+
       {/* Custom Pagination */}
       <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-2">
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
