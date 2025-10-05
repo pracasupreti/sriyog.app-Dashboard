@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-hot-toast';
+import { use } from 'react';
+import { AxiosError, AxiosResponse } from 'axios';
 
 interface User {
   _id: string;
@@ -22,6 +24,7 @@ interface AuthState {
 //   setUser: (user: User | null) => void;
 //   setLoading: (loading: boolean) => void;
   initialize: () => Promise<void>;
+  refreshToken: () => Promise<any>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -135,4 +138,119 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     await get().checkAuth();
   },
+     refreshToken: async () => { 
+		// if(get().isLoading) return;
+		try {
+       console.log('🔄 Attempting to refresh token...');
+			const response = await axiosInstance.post("/auth/refresh-token");
+      console.log('✅ Token refresh successful:', response.data);
+          if (response.data.user) {
+        set({ 
+          user: response.data.user,
+          isAuthenticated: true,
+          initialized: true
+        });
+      }
+			return response.data;
+		} catch (error:unknown) {
+            console.error('❌ Token refresh failed:', error);
+      
+      // Clear auth state on refresh failure
+      set({ 
+        user: null, 
+        isAuthenticated: false,
+        isLoading: false,
+        initialized: true
+      });
+      
+      throw error;
+	}
+
+}
 }));
+
+// let refreshPromise:Promise<unknown>|null=null;
+// axiosInstance.interceptors.response.use(
+// (response:AxiosResponse)=>response,
+//   async(error:AxiosError)=>{
+//     const originalRequest=error.config;
+//     if(error.response?.status === 401 && !originalRequest._retry){
+//       originalRequest._retry=true;
+//       try{
+//         if(refreshPromise){
+//           await refreshPromise;
+//           return axiosInstance(originalRequest)
+//         }
+//         //start new refresh Promise
+//         refreshPromise=useAuthStore.getState().refreshToken();
+//         await refreshPromise;
+//         refreshPromise=null;
+//         return axiosInstance(originalRequest);
+          
+//       }catch(refreshError:any){
+//         useAuthStore.getState().logout();
+//         return Promise.reject(refreshError);
+//       }
+//     }
+//     return Promise.reject(error);
+//   }
+// )
+
+let refreshPromise: Promise<any> | null = null;
+
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config;
+    
+    // Type guard to ensure originalRequest exists and add _retry property
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    // Add _retry property to the request config
+    interface ExtendedAxiosRequestConfig {
+      _retry?: boolean;
+    }
+    
+    const extendedRequest = originalRequest as ExtendedAxiosRequestConfig;
+
+    if (error.response?.status === 401 && !extendedRequest._retry) {
+      extendedRequest._retry = true;
+      
+      try {
+        console.log('🔄 401 detected, attempting token refresh...');
+        
+        // If there's already a refresh in progress, wait for it
+        if (refreshPromise) {
+          console.log('⏳ Waiting for existing refresh promise...');
+          await refreshPromise;
+          return axiosInstance(originalRequest);
+        }
+
+        // Start new refresh promise
+        console.log('🚀 Starting new token refresh...');
+        refreshPromise = useAuthStore.getState().refreshToken();
+        await refreshPromise;
+        refreshPromise = null;
+        
+        console.log('✅ Token refreshed, retrying original request...');
+        return axiosInstance(originalRequest);
+          
+      } catch (refreshError: unknown) {
+        console.error('❌ Token refresh failed, logging out user:', refreshError);
+        refreshPromise = null;
+        
+        // Only logout if it's actually a refresh token failure
+        const authStore = useAuthStore.getState();
+        if (authStore.isAuthenticated) {
+          await authStore.logout();
+        }
+        
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);

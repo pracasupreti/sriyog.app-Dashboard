@@ -1,13 +1,12 @@
 import User from "../model/user.model.js";
 import jwt from "jsonwebtoken"
 import {redis} from "../lib/redis.js"
-import bcrypt from "bcrypt"
-// import cloudinary from "../lib/cloudinary.js";
+
 
 
 const generateToken=(userId)=>{ //The userId parameter is used to identify the user in the JWT tokens.
   const accessToken=jwt.sign({userId},process.env.ACCESS_TOKEN_SECRET,{
-    expiresIn:"3h"
+    expiresIn:"60s"
   })
 
   const refreshToken=jwt.sign({userId},process.env.REFRESH_TOKEN_SECRET,{
@@ -19,7 +18,7 @@ const generateToken=(userId)=>{ //The userId parameter is used to identify the u
 
 
 const storeRefreshToken=async(userId,refreshToken)=>{
-  await redis.set(`redis_token:${userId}`,refreshToken,"Ex",15*60*60*1000)
+  await redis.set(`refresh_token:${userId}`,refreshToken,"Ex",15*60*60*1000)
 }
 
   const setCookies=(res,accessToken,refreshToken)=>{
@@ -221,3 +220,36 @@ export const getProfile=async(req,res)=>{
 //     console.log("error in updateProfile controller",error);
 //     res.status(500).json({error:"internal server error"});
 //   }}
+
+export const refreshToken = async (req, res) => {
+    console.log('hi i ma here')
+	try {
+		const refreshToken = req.cookies.refreshToken;
+
+		if (!refreshToken) {
+			return res.status(401).json({ message: "No refresh token provided" });
+		}
+
+		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+
+		if (storedToken !== refreshToken) {
+			return res.status(401).json({ message: "Invalid refresh token" });
+		}
+
+		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60s" });
+
+		res.cookie("accessToken", accessToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge:  2*60*60 * 1000,
+		});
+
+		res.json({ message: "Token refreshed successfully" });
+	} catch (error) {
+		console.log("Error in refreshToken controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+}
+

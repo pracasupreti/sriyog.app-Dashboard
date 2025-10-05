@@ -63,7 +63,6 @@ useEffect(() => {
         setError(null);
         
         const response = await axiosInstance.get(`/professionaluser/joinforms/${id}`);
-        console.log(response)
         setUserData(response.data);
       } catch (err: any) {
         console.error("Error fetching professional data:", err);

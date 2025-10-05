@@ -5,7 +5,6 @@ import JoinForm from '../model/joinform.model.js';
 export const getWaitingProfessionals = async (req, res) => {
 	try {
 		const joinForms = await JoinForm.find();
-        console.log(joinForms)
 		res.json(joinForms);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
