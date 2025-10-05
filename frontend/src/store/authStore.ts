@@ -13,6 +13,7 @@ interface User {
 interface AuthState {
   user: User | null;
   isLoading: boolean;
+  isUserLoggingOut:boolean;
   isAuthenticated: boolean;
   initialized: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
@@ -26,6 +27,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
+  isUserLoggingOut:false,
   isAuthenticated: false,
   initialized: false,
 
@@ -79,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    // set({ isLoading: true });
+    set({ isUserLoggingOut: true });
     try {
       await axiosInstance.get('/auth/logout');
     } catch (error) {
@@ -88,7 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ 
         user: null, 
         isAuthenticated: false, 
-        // isLoading: false,
+        isUserLoggingOut: false,
         initialized: true
       });
     }

@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 
 // Simple, ACTUALLY bulletproof pagination helper
 function getPageNumbers(current: number, total: number) {
@@ -152,9 +154,12 @@ const columns: ColumnDef<Professional>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
+    
+    cell: (info) => {
+      const row=info.row.original;
+      return ( 
       <button className="bg-primary hover:bg-red-700  transition-colors duration-300 p-2 rounded-full">
-       <Link href='/waiting-professional'>
+       <Link href={`/waiting-professionals/${row.Phone}`}>
       <svg
     xmlns="http://www.w3.org/2000/svg"
     width="15"
@@ -179,11 +184,13 @@ const columns: ColumnDef<Professional>[] = [
   </svg>
        </Link>
       </button>
-    ),
+      )
+    },
   },
 ];
 
 export default function WaitingProfessionalsTable() {
+
   // State management
   const [data, setData] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);

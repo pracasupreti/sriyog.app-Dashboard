@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const {logout,user} = useAuthStore();
+  const {logout,user,isUserLoggingOut} = useAuthStore();
 
 function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   e.stopPropagation();
@@ -164,7 +164,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
               fill=""
             />
           </svg>
-          Sign out
+          {isUserLoggingOut ? 'Signing out...' : 'Sign out'}
         </div>
       </Dropdown>
     </div>

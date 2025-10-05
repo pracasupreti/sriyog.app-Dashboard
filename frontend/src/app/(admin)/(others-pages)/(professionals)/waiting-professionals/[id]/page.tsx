@@ -23,7 +23,13 @@ const userData = {
   idUpload: "https://res.cloudinary.com/dlnmzpfqh/image/upload/v1758286663/user_ids/fp32q9e6txagn4trmemy.jpg",
 };
 
-const ProfessionalPage = () => {
+const ProfessionalPage =async ({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) => {
+  const id=await params;
+  console.log("Fetched ID:", id);
   return (
     <div className="flex w-full flex-col items-center py-4 px-2 min-h-screen bg-gray-50">
       {/* <h1 className="text-2xl md:text-4xl font-semibold text-center mb-4 text-primary">Profile Page</h1> */}
