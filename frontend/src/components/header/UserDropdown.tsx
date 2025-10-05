@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const {logout} = useAuthStore();
+  const {logout,user} = useAuthStore();
 
 function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   e.stopPropagation();
@@ -27,12 +27,12 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
           <Image
             width={44}
             height={44}
-            src="/images/prakash.png"
+            src={user?.Photo || '/images/defaultphoto.jpg'}
             alt="User"
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Prakash Upreti</span>
+        <span className="block mr-1 font-medium text-theme-sm">{user?.Fullname}</span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
