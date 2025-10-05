@@ -54,6 +54,7 @@ const ChangeStatusModal = ({ menuOpen, setShowStatusModal, userData, setUserData
 
     const [mounted, setMounted] = useState(false);
   const portalRef = useRef<HTMLElement | null>(null);
+  
 
   useEffect(() => {
     portalRef.current = document.getElementById('changeStatusModal');
@@ -63,8 +64,8 @@ const ChangeStatusModal = ({ menuOpen, setShowStatusModal, userData, setUserData
   if (!mounted || !portalRef.current) return null;
 
   return createPortal (
-     <div className="fixed inset-0 bg-gray-200/20 backdrop-blur-[8px] flex items-center justify-center z-[99999999] p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+     <div className="fixed inset-0 bg-gray-200/20 backdrop-blur-[8px] flex items-center justify-center z-[99999999] p-4" onClick={()=>setShowStatusModal(false)}>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">

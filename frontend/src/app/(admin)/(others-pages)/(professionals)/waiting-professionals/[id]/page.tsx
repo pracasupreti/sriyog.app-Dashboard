@@ -42,6 +42,13 @@ const ProfessionalPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
 
+useEffect(() => {
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'smooth'
+  });
+}, [userData])
 
   useEffect(() => {
     const fetchProfessionalData = async () => {
