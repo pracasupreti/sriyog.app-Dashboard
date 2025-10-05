@@ -273,7 +273,6 @@ const ProfessionalPage = () => {
 
         {/* Status Change Modal */}
         {showStatusModal && (
-         
           <ChangeStatusModal  menuOpen={showStatusModal} setShowStatusModal={setShowStatusModal} userData={userData} setUserData={setUserData}/>  
         )}
       </div>
