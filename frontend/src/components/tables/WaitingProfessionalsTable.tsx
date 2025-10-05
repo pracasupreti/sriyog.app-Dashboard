@@ -72,34 +72,34 @@ type Professional = {
 // API function
 const fetchWaitingProfessionals = async (): Promise<Professional[]> => {
   try {
-    console.log('🚀 Fetching from:', axiosInstance.defaults.baseURL + '/professionaluser/waiting');
+    // console.log('🚀 Fetching from:', axiosInstance.defaults.baseURL + '/professionaluser/waiting');
     const response = await axiosInstance.get('/professionaluser/waiting');
-    console.log('✅ API Response:', response);
-    console.log('📊 Response data:', response.data);
+    // console.log('✅ API Response:', response);
+    // console.log('📊 Response data:', response.data);
     
     // Handle different response structures
     if (Array.isArray(response.data)) {
-      console.log('📦 Data is direct array, length:', response.data.length);
+      // console.log('📦 Data is direct array, length:', response.data.length);
       return response.data;
     } else if (response.data.data && Array.isArray(response.data.data)) {
-      console.log('📦 Data is nested in data property, length:', response.data.data.length);
+      // console.log('📦 Data is nested in data property, length:', response.data.data.length);
       return response.data.data;
     } else if (response.data.success && Array.isArray(response.data.data)) {
-      console.log('📦 Data has success wrapper, length:', response.data.data.length);
+      // console.log('📦 Data has success wrapper, length:', response.data.data.length);
       return response.data.data;
     }
-    console.log('⚠️ Unexpected data structure:', response.data);
+    // console.log('⚠️ Unexpected data structure:', response.data);
     return [];
   } catch (error: unknown) {
-    console.error('❌ Failed to fetch waiting professionals:', error);
+    // console.error('❌ Failed to fetch waiting professionals:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorResponse = error && typeof error === 'object' && 'response' in error ? error.response : null;
-    console.error('❌ Error details:', {
-      message: errorMessage,
-      status: errorResponse && typeof errorResponse === 'object' && 'status' in errorResponse ? errorResponse.status : undefined,
-      statusText: errorResponse && typeof errorResponse === 'object' && 'statusText' in errorResponse ? errorResponse.statusText : undefined,
-      data: errorResponse && typeof errorResponse === 'object' && 'data' in errorResponse ? errorResponse.data : undefined
-    });
+    // console.error('❌ Error details:', {
+    //   message: errorMessage,
+    //   status: errorResponse && typeof errorResponse === 'object' && 'status' in errorResponse ? errorResponse.status : undefined,
+    //   statusText: errorResponse && typeof errorResponse === 'object' && 'statusText' in errorResponse ? errorResponse.statusText : undefined,
+    //   data: errorResponse && typeof errorResponse === 'object' && 'data' in errorResponse ? errorResponse.data : undefined
+    // });
     throw error;
   }
 };
