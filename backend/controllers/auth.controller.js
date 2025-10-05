@@ -6,7 +6,7 @@ import {redis} from "../lib/redis.js"
 
 const generateToken=(userId)=>{ //The userId parameter is used to identify the user in the JWT tokens.
   const accessToken=jwt.sign({userId},process.env.ACCESS_TOKEN_SECRET,{
-    expiresIn:"60s"
+    expiresIn:"15m"
   })
 
   const refreshToken=jwt.sign({userId},process.env.REFRESH_TOKEN_SECRET,{
@@ -18,15 +18,14 @@ const generateToken=(userId)=>{ //The userId parameter is used to identify the u
 
 
 const storeRefreshToken=async(userId,refreshToken)=>{
-  await redis.set(`refresh_token:${userId}`,refreshToken,"Ex",15*60*60*1000)
-}
+  await redis.set(`refresh_token:${userId}`,refreshToken,"Ex",7*24*60*60) }
 
   const setCookies=(res,accessToken,refreshToken)=>{
     res.cookie("accessToken",accessToken,{
       httpOnly:true,
       secure:process.env.NODE_ENV=="production",
       sameSite:process.env.NODE_ENV=="production"? "strict":"lax", // "strict" for production, "lax" for development
-      maxAge: 3 * 60 * 60 * 1000 
+      maxAge: 15*60*1000
     })
     res.cookie("refreshToken",refreshToken,{
       httpOnly:true,
@@ -222,7 +221,6 @@ export const getProfile=async(req,res)=>{
 //   }}
 
 export const refreshToken = async (req, res) => {
-    console.log('hi i ma here')
 	try {
 		const refreshToken = req.cookies.refreshToken;
 
@@ -237,13 +235,13 @@ export const refreshToken = async (req, res) => {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
 
-		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60s" });
+		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
-			maxAge:  2*60*60 * 1000,
+			maxAge:  15*60*1000,
 		});
 
 		res.json({ message: "Token refreshed successfully" });
