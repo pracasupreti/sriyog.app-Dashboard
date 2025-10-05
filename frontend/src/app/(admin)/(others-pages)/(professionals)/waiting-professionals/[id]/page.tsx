@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BadgeCheck, Edit2, Loader2, AlertCircle } from "lucide-react";
+import { BadgeCheck, Edit2, Loader2, AlertCircle, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import axiosInstance from "@/lib/axios";
+import ChangeStatusModal, { getStatusColor } from "@/components/modals/ChangeStatusModal";
 
-interface ProfessionalData {
+export interface ProfessionalData {
   _id: string;
   "First Name"?: string;
   "Middle Name"?: string;
@@ -39,6 +40,8 @@ const ProfessionalPage = () => {
   const [userData, setUserData] = useState<ProfessionalData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+
 
   useEffect(() => {
     const fetchProfessionalData = async () => {
@@ -126,14 +129,7 @@ const ProfessionalPage = () => {
             Verified
           </span>
           {/* Status Toggle */}
-          <div className={`flex items-center justify-center px-5 rounded-md py-2 text-white dark:text-black ${
-            userData.status === 'Basic' ? 'bg-green-600' :
-            userData.status === 'Professional' ? 'bg-blue-600' :
-            userData.status === 'Premium' ? 'bg-purple-600' :
-            userData.status === 'Suspended' ? 'bg-red-600' :
-            userData.status === 'Offline' ? 'bg-gray-600' :
-            'bg-yellow-600'
-          }`}>
+          <div className={`flex items-center justify-center px-5 rounded-md py-2 text-white ${getStatusColor(userData.status || 'Basic')}`}>
             {userData.status || 'Pending'}
           </div>
         </div>
@@ -266,13 +262,20 @@ const ProfessionalPage = () => {
 
         {/* Change Status Button */}
         <div className="flex justify-center">
-          <Link href={`/admin/professionals/waiting-professionals/${id}/edit-status`}>
-            <button className="flex items-center gap-2 bg-primary cursor-pointer hover:bg-red-800 text-white px-6 py-2 rounded-lg font-semibold transition">
-              <Edit2 className="w-4 h-4" />
-              Change status
-            </button>
-          </Link>
+          <button
+            onClick={() => setShowStatusModal(true)}
+            className="flex items-center gap-2 bg-primary cursor-pointer hover:bg-red-800 text-white px-6 py-2 rounded-lg font-semibold transition"
+          >
+            <Edit2 className="w-4 h-4" />
+            Change status
+          </button>
         </div>
+
+        {/* Status Change Modal */}
+        {showStatusModal && (
+         
+          <ChangeStatusModal  menuOpen={showStatusModal} setShowStatusModal={setShowStatusModal} userData={userData} setUserData={setUserData}/>  
+        )}
       </div>
     </div>
   );
