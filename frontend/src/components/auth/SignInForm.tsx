@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 		const [password, setPassword] = useState('');
 		const [email, setEmail] = useState('');
 		const [isSubmitting, setIsSubmitting] = useState(false);
-		const { login, isLoading } = useAuthStore();
+		const { login } = useAuthStore();
 		const router = useRouter();
 
 		const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

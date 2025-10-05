@@ -14,6 +14,7 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  initialized: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -24,8 +25,9 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  isLoading: false,
+  isLoading: true,
   isAuthenticated: false,
+  initialized: false,
 
 //   setUser: (user) => {
 //     set({ user, isAuthenticated: !!user });
@@ -48,7 +50,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ 
           user, 
           isAuthenticated: true, 
-          isLoading: false 
+          isLoading: false,
+          initialized: true
         });
         // Don't show toast here - let the redirect happen smoothly
         // toast.success('Login successful');
@@ -76,7 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    set({ isLoading: true });
+    // set({ isLoading: true });
     try {
       await axiosInstance.get('/auth/logout');
     } catch (error) {
@@ -85,7 +88,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ 
         user: null, 
         isAuthenticated: false, 
-        isLoading: false 
+        // isLoading: false,
+        initialized: true
       });
     }
   },
@@ -94,25 +98,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       const response = await axiosInstance.get('/auth/profile');
+      console.log(response)
       if (response.data) {
         set({ 
           user: response.data, 
           isAuthenticated: true,
-          isLoading: false
+          isLoading: false,
+          initialized: true
         });
       } else {
         set({ 
           user: null, 
           isAuthenticated: false,
-          isLoading: false
+          isLoading: false,
+          initialized: true
         });
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Optional: Clear stale cookies
+      try {
+        await axiosInstance.get('/auth/logout');
+      } catch {}
+      
       set({ 
         user: null, 
         isAuthenticated: false,
-        isLoading: false
+        isLoading: false,
+        initialized: true
       });
     }
   },

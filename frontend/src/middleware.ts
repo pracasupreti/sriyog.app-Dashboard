@@ -2,20 +2,23 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  console.log('i am running middleware')
-  // Remove debug log for production
   const { pathname } = request.nextUrl;
   const accessToken = request.cookies.get('accessToken')?.value;
 
-  // List of protected routes
-  // '/' must match exactly, others can use startsWith
-  const protectedRoutes = ['/dashboard', '/profile', '/admin'];
+  // Protected routes that require authentication
+  const protectedRoutes = ['/', '/dashboard', '/profile', '/admin'];
   const authRoutes = ['/signin', '/signup'];
 
-  // Redirect unauthenticated users from protected routes
-  // Protect '/' (home) with exact match, others with startsWith
-  if ((pathname === '/' && !accessToken) ||
-      (protectedRoutes.some(route => pathname.startsWith(route)) && !accessToken)) {
+  // Check if current path is protected
+  const isProtectedRoute = protectedRoutes.some(route => {
+    if (route === '/') {
+      return pathname === '/'; // Exact match for home
+    }
+    return pathname.startsWith(route);
+  });
+
+  // Redirect unauthenticated users from protected routes to signin
+  if (isProtectedRoute && !accessToken) {
     return NextResponse.redirect(new URL('/signin', request.url));
   }
 
@@ -23,7 +26,7 @@ export function middleware(request: NextRequest) {
   if (authRoutes.includes(pathname) && accessToken) {
     return NextResponse.redirect(new URL('/', request.url));
   }
-
+  
   return NextResponse.next();
 }
 
