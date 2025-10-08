@@ -1,4 +1,4 @@
-export async function validateToken(token: string, refreshToken?: string): Promise<{ valid: boolean; user?: any }> {
+export async function validateToken(token: string, refreshToken?: string): Promise<{ valid: boolean; user?: unknown }> {
   try {
     const response = await fetch('http://localhost:5000/api/auth/profile', {
       method: 'GET',

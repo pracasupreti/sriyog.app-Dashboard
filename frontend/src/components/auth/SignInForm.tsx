@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Loader, LogIn, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
@@ -37,9 +38,11 @@ import { useRouter } from "next/navigation";
 				{/* Logo Placeholder */}
 				<div className="w-12 h-12 rounded-full bg-[#8B1C1C] flex items-center justify-center mb-4">
 					{/* Replace src with your logo later */}
-					<img
+					<Image
 						src="/images/defaultlogo.png"
 						alt="Logo"
+						width={32}
+						height={32}
 						className="w-8 h-8 object-contain"
 					/>
 				</div>

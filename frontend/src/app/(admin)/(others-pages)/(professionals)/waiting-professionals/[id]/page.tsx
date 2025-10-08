@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BadgeCheck, Edit2, Loader2, AlertCircle, X } from "lucide-react";
+import { BadgeCheck, Edit2, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import axiosInstance from "@/lib/axios";
+import Image from "next/image";
 import ChangeStatusModal, { getStatusColor } from "@/components/modals/ChangeStatusModal";
 
 export interface ProfessionalData {
@@ -64,9 +65,11 @@ useEffect(() => {
         
         const response = await axiosInstance.get(`/professionaluser/joinforms/${id}`);
         setUserData(response.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error fetching professional data:", err);
-        if (err.response?.status === 404) {
+        if (err instanceof Error && 'response' in err && 
+            typeof (err as { response?: { status?: number } }).response === 'object' && 
+            (err as { response?: { status?: number } }).response?.status === 404) {
           setError("Professional not found");
         } else {
           setError("Failed to load professional data. Please try again.");
@@ -149,9 +152,11 @@ useEffect(() => {
                 <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">Headshot</span>
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-700">
                   {userData.Headshot ? (
-                    <img
+                    <Image
                       src={userData.Headshot}
                       alt="User Headshot"
+                      width={128}
+                      height={128}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -165,9 +170,11 @@ useEffect(() => {
                 <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">ID</span>
                 <div className="w-32 h-24 md:w-60 md:h-32 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-700">
                   {userData.idUpload ? (
-                    <img
+                    <Image
                       src={userData.idUpload}
                       alt="User ID"
+                      width={240}
+                      height={128}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -279,7 +286,7 @@ useEffect(() => {
 
         {/* Status Change Modal */}
         {showStatusModal && (
-          <ChangeStatusModal  menuOpen={showStatusModal} setShowStatusModal={setShowStatusModal} userData={userData} setUserData={setUserData}/>  
+          <ChangeStatusModal   setShowStatusModal={setShowStatusModal} userData={userData} setUserData={setUserData}/>  
         )}
       </div>
     </div>

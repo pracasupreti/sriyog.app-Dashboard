@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-hot-toast';
-import { use } from 'react';
 import { AxiosError, AxiosResponse } from 'axios';
 
 interface User {
@@ -24,7 +23,7 @@ interface AuthState {
 //   setUser: (user: User | null) => void;
 //   setLoading: (loading: boolean) => void;
   initialize: () => Promise<void>;
-  refreshToken: () => Promise<any>;
+  refreshToken: () => Promise<unknown>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -196,7 +195,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 //   }
 // )
 
-let refreshPromise: Promise<any> | null = null;
+let refreshPromise: Promise<unknown> | null = null;
 
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,

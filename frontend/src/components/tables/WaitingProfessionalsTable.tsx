@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 
 // Simple, ACTUALLY bulletproof pagination helper
@@ -92,13 +92,11 @@ const fetchWaitingProfessionals = async (): Promise<Professional[]> => {
     return [];
   } catch (error: unknown) {
     // console.error('❌ Failed to fetch waiting professionals:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorResponse = error && typeof error === 'object' && 'response' in error ? error.response : null;
     // console.error('❌ Error details:', {
-    //   message: errorMessage,
-    //   status: errorResponse && typeof errorResponse === 'object' && 'status' in errorResponse ? errorResponse.status : undefined,
-    //   statusText: errorResponse && typeof errorResponse === 'object' && 'statusText' in errorResponse ? errorResponse.statusText : undefined,
-    //   data: errorResponse && typeof errorResponse === 'object' && 'data' in errorResponse ? errorResponse.data : undefined
+    //   message: error instanceof Error ? error.message : 'Unknown error',
+    //   status: error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response ? error.response.status : undefined,
+    //   statusText: error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'statusText' in error.response ? error.response.statusText : undefined,
+    //   data: error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response ? error.response.data : undefined
     // });
     throw error;
   }
@@ -141,9 +139,11 @@ const columns: ColumnDef<Professional>[] = [
     accessorKey: "Headshot",
     header: "Headshot",
     cell: info => (
-      <img
-        src={info.getValue() as string}
+      <Image
+        src={info.getValue() as string || "/images/defaultlogo.png"}
         alt="headshot"
+        width={32}
+        height={32}
         className="w-8 h-8 rounded-full mx-auto object-cover"
         onError={(e) => {
           (e.target as HTMLImageElement).src = "/images/defaultlogo.png";

@@ -1,12 +1,12 @@
 'use client'
 import { ProfessionalData } from '@/app/(admin)/(others-pages)/(professionals)/waiting-professionals/[id]/page';
 import axiosInstance from '@/lib/axios';
-import { Loader2, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 
    interface StatusProps{
-        menuOpen:boolean;
+        // menuOpen:boolean;
         setShowStatusModal: React.Dispatch<React.SetStateAction<boolean>>;
         userData:ProfessionalData;
         setUserData: React.Dispatch<React.SetStateAction<ProfessionalData | null>>;
@@ -21,7 +21,7 @@ import { createPortal } from 'react-dom';
       default: return 'bg-yellow-600';
     }
   };
-const ChangeStatusModal = ({ menuOpen, setShowStatusModal, userData, setUserData }: StatusProps) => {
+const ChangeStatusModal = ({ setShowStatusModal, userData, setUserData }: Omit<StatusProps, 'menuOpen'>) => {
       const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
       const [selectedStatus, setSelectedStatus] = useState(userData?.status || 'Basic');
 
@@ -33,7 +33,7 @@ const ChangeStatusModal = ({ menuOpen, setShowStatusModal, userData, setUserData
 
     try {
       setIsUpdatingStatus(true);
-      const response = await axiosInstance.patch(`/professionaluser/joinforms/${userData._id}/status`, {
+      await axiosInstance.patch(`/professionaluser/joinforms/${userData._id}/status`, {
         status: newStatus
       });
       
@@ -43,7 +43,7 @@ const ChangeStatusModal = ({ menuOpen, setShowStatusModal, userData, setUserData
       
       // You can add a toast notification here
       console.log('Status updated successfully');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating status:', err);
       // You can add error toast notification here
     } finally {
