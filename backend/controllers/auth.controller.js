@@ -249,7 +249,9 @@ export const refreshToken = async (req, res) => {
 			maxAge:  15*60*1000,
 		});
 
-		res.json({ message: "Token refreshed successfully" });
+     const user = await User.findById(decoded.userId).select("-Password");
+
+		res.json({ message: "Token refreshed successfully", user });
 	} catch (error) {
 		console.log("Error in refreshToken controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
