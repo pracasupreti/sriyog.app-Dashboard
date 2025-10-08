@@ -21,17 +21,21 @@ const storeRefreshToken=async(userId,refreshToken)=>{
   await redis.set(`refresh_token:${userId}`,refreshToken,"Ex",7*24*60*60) }
 
   const setCookies=(res,accessToken,refreshToken)=>{
+    const isProduction = process.env.NODE_ENV === "production";
+    
     res.cookie("accessToken",accessToken,{
       httpOnly:true,
-      secure:process.env.NODE_ENV=="production",
-      sameSite:process.env.NODE_ENV=="production"? "strict":"lax", // "strict" for production, "lax" for development
-      maxAge: 15*60*1000
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax", // "none" for cross-origin requests in production
+      maxAge: 15*60*1000,
+      domain: isProduction ? undefined : undefined // Let browser handle domain
     })
     res.cookie("refreshToken",refreshToken,{
       httpOnly:true,
-      secure:process.env.NODE_ENV=="production",
-      sameSite:process.env.NODE_ENV=="production"? "strict":"lax", // "strict" for production, "lax" for development
-      maxAge:7*24*60*60*1000
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax", // "none" for cross-origin requests in production
+      maxAge:7*24*60*60*1000,
+      domain: isProduction ? undefined : undefined // Let browser handle domain
     })
   }
 
@@ -236,11 +240,12 @@ export const refreshToken = async (req, res) => {
 		}
 
 		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+    const isProduction = process.env.NODE_ENV === "production";
 
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
+			secure: isProduction,
+			sameSite: isProduction ? "none" : "lax", // ✅ This should match your other cookies
 			maxAge:  15*60*1000,
 		});
 

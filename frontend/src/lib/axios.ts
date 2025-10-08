@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 console.log('🔍 Environment Debug:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
@@ -11,6 +10,9 @@ const axiosInstance = axios.create({
     ? process.env.NEXT_PUBLIC_API_BASE_URL_PROD
     : process.env.NEXT_PUBLIC_API_BASE_URL,
   withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 console.log('🎯 Selected baseURL:', axiosInstance.defaults.baseURL);
