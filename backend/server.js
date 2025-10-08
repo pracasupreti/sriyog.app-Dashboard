@@ -12,7 +12,7 @@ dotenv.config()
 const app=express()
 
 app.use(cors({
-    origin: ['http://localhost:3000','http://localhost:5173','http://localhost:5174','http://192.168.1.69:3000'], // replace with your frontend URL
+    origin: ['http://localhost:3000','https://sriyogappdashboard.vercel.app','http://192.168.1.69:3000'], // replace with your frontend URL
     credentials: true                // allow cookies/auth headers
 }));
     
