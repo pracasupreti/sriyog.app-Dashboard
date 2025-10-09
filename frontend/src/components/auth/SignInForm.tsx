@@ -20,7 +20,8 @@ import { useRouter } from "next/navigation";
 			try {
 				const result = await login(email, password);
 				if (result.success) {
-					router.replace("/");
+					// router.replace("/");
+					setIsSubmitting(false)
 				} else {
 					setIsSubmitting(false);
 				}

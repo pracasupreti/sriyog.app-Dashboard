@@ -43,22 +43,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email: string, password: string) => {
     set({ isLoading: true });
+    console.log('🔍 Starting login process...');
+    
     try {
       const response = await axiosInstance.post('/auth/login', {
         Email: email,
         Password: password
       });
 
+      console.log('🔍 Login response:', response.data);
+
       if (response.data.success) {
         const user = response.data.user;
+        console.log('✅ Setting user data:', user);
+        
         set({ 
           user, 
           isAuthenticated: true, 
           isLoading: false,
           initialized: true
         });
-        // Don't show toast here - let the redirect happen smoothly
-        // toast.success('Login successful');
+        
+        console.log('✅ Auth state updated successfully');
         return { success: true };
       } else {
         set({ isLoading: false });
