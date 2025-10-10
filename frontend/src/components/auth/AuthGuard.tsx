@@ -1,7 +1,7 @@
 "use client";
 import { useAuthStore } from "@/store/authStore";
 import { Loader } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import {  usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -12,7 +12,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const initialized = useAuthStore((state) => state.initialized);
   
-  const router = useRouter();
+  // const router = useRouter();
   const pathname = usePathname();
 
   console.log('Current pathname:', pathname);
