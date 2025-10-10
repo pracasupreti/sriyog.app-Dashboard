@@ -13,26 +13,34 @@ import { useAuthStore } from "@/store/authStore";
 		const { login } = useAuthStore();
 		// const router = useRouter();
 
-		const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-			e.preventDefault();
-			setIsSubmitting(true);
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		console.log('🔍 Login form submitted');
+		setIsSubmitting(true);
+		
+		try {
+			const result = await login(email, password);
+			console.log('🔍 Login result:', result);
 			
-			try {
-				const result = await login(email, password);
-				if (result.success) {
-					// router.replace("/");
-					console.log('i am inside the result.success but not replacing to / ? why');
-					// setIsSubmitting(false)
-				} else {
-					setIsSubmitting(false);
-				}
-			} catch (error) {
-				console.error('Login error:', error);
+			if (result.success) {
+				console.log('✅ Login successful! Redirecting to home...');
+				
+				// ✅ Wait a moment for state to update, then redirect
+				setTimeout(() => {
+					console.log('🚀 Forcing redirect to home page...');
+					window.location.href = '/';
+				}, 100);
+				
+				setIsSubmitting(false);
+			} else {
+				console.log('❌ Login failed:', result.message);
 				setIsSubmitting(false);
 			}
+		} catch (error) {
+			console.error('❌ Login error:', error);
+			setIsSubmitting(false);
 		}
-
-		// Only show loading during actual submission, not initial load
+	}		// Only show loading during actual submission, not initial load
 		const showLoading = isSubmitting;
 		return (
 			<div className="min-h-screen w-full flex items-center justify-center ">
