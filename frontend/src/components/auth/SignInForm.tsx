@@ -4,14 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader, LogIn, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 	const SignInForm = () => {
 		const [showPassword, setShowPassword] = useState(false);
 		const [password, setPassword] = useState('');
 		const [email, setEmail] = useState('');
 		const [isSubmitting, setIsSubmitting] = useState(false);
 		const { login } = useAuthStore();
-		const router = useRouter();
+		// const router = useRouter();
 
 		const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 			try {
 				const result = await login(email, password);
 				if (result.success) {
-					router.replace("/");
+					// router.replace("/");
 					console.log('i am inside the result.success but not replacing to / ? why');
 					// setIsSubmitting(false)
 				} else {

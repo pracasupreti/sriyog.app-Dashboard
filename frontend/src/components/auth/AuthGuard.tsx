@@ -7,12 +7,17 @@ import { useEffect } from "react";
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   console.log('AuthGuard rendered vayoo raaaaaaaaaaa');
   const { isLoading, isAuthenticated, initialized } = useAuthStore();
-  console.log('AuthGuard State:', { isLoading, isAuthenticated, initialized });
   const router = useRouter();
   const pathname = usePathname();
+  console.log(pathname)
+  console.log('AuthGuard State:', { isLoading, isAuthenticated, initialized });
+  //  isAuthenticated: true, 
+  //         isLoading: false,
+  //         initialized: true
 
   useEffect(() => {
     // Don't redirect until initialization is complete
+    console.log('i am calling?  hello hi bye')
     if (!initialized) return;
     
     // Redirect authenticated users away from auth pages
