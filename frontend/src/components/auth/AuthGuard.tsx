@@ -6,6 +6,7 @@ import { useEffect } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isLoading, isAuthenticated, initialized } = useAuthStore();
+  console.log('AuthGuard State:', { isLoading, isAuthenticated, initialized });
   const router = useRouter();
   const pathname = usePathname();
 
