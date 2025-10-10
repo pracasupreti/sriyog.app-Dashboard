@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
+  console.log('AuthGuard rendered vayoo raaaaaaaaaaa');
   const { isLoading, isAuthenticated, initialized } = useAuthStore();
   console.log('AuthGuard State:', { isLoading, isAuthenticated, initialized });
   const router = useRouter();
