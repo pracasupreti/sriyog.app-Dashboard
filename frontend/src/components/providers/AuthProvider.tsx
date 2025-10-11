@@ -8,6 +8,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   console.log('i am auth provider on running state');
 
   useEffect(() => {
+    console.log('this user effect is also running');
     initialize();
   }, [initialize]);
 

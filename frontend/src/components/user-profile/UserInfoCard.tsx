@@ -5,9 +5,11 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import { useAuthStore } from "@/store/authStore";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
+  const { user } = useAuthStore();
   const handleSave = () => {
     // Handle save logic here
     console.log("Saving changes...");
@@ -27,37 +29,37 @@ export default function UserInfoCard() {
                 First Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Musharof
+                {user?.Fullname}
               </p>
             </div>
 
-            <div>
+            {/* <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Last Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 Chowdhury
               </p>
-            </div>
+            </div> */}
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Email address
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                randomuser@pimjo.com
+                {user?.Email}
               </p>
             </div>
 
-            <div>
+            {/* <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Phone
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 +09 363 398 46
               </p>
-            </div>
-
+            </div> */}
+{/* 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Bio
@@ -65,7 +67,7 @@ export default function UserInfoCard() {
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 Team Manager
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
 
