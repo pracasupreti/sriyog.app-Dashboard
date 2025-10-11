@@ -105,19 +105,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuth: async () => {
-    // ✅ Don't run checkAuth if already initialized
-    if (get().initialized) {
-      console.log('🔄 checkAuth skipped - already initialized');
-      return;
-    }
-    
-    console.log('🔄 checkAuth starting...');
     set({ isLoading: true });
-    
     try {
       const response = await axiosInstance.get('/auth/profile');
-      console.log('✅ Auth profile response:', response.data);
-      
+      console.log(response)
       if (response.data) {
         set({ 
           user: response.data, 
@@ -125,7 +116,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           initialized: true
         });
-        console.log('✅ User authenticated and initialized');
       } else {
         set({ 
           user: null, 
@@ -133,10 +123,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           initialized: true
         });
-        console.log('❌ No user data, not authenticated but initialized');
       }
     } catch (error) {
-      console.error('❌ Auth check failed:', error);
+      console.error('Auth check failed:', error);
       // Optional: Clear stale cookies
       try {
         await axiosInstance.get('/auth/logout');
@@ -148,16 +137,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         initialized: true
       });
-      console.log('❌ Auth check failed, user not authenticated but initialized');
     }
   },
 
   initialize: async () => {
-    if (get().initialized) {
-      console.log('🔄 initialize() skipped - already initialized');
-      return;
-    }
-    console.log('🔄 initialize() calling checkAuth...');
     await get().checkAuth();
   },
      refreshToken: async () => { 

@@ -1,70 +1,58 @@
 "use client";
 import { useAuthStore } from "@/store/authStore";
 import { Loader } from "lucide-react";
-import {  usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  console.log('AuthGuard rendered');
-  
-  // ✅ Use individual selectors to ensure reactivity
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const initialized = useAuthStore((state) => state.initialized);
-  
-  // const router = useRouter();
+  const { isLoading, isAuthenticated, initialized } = useAuthStore();
+  const router = useRouter();
   const pathname = usePathname();
+  
+  console.log('AuthGuard State:', { isLoading, isAuthenticated, initialized, pathname });
 
-  console.log('Current pathname:', pathname);
-  console.log('AuthGuard State:', { 
-    isLoading, 
-    isAuthenticated, 
-    initialized 
-  });
-
-  // ✅ React to authentication state changes
   useEffect(() => {
-    // Don't do anything until initialized
+    console.log('🔥 AuthGuard useEffect triggered');
+    
+    // Don't redirect until initialization is complete
     if (!initialized) {
       console.log('❌ Not initialized yet, waiting...');
       return;
     }
-
-    console.log('🔥 Auth state changed!', { 
-      isAuthenticated, 
-      pathname,
-      initialized 
-    });
     
-    // Handle authenticated user on signin page
+    // Redirect authenticated users away from auth pages
     if (isAuthenticated && pathname === '/signin') {
-      console.log('✅ Authenticated user on signin page, redirecting to home...');
-      // ✅ Use window.location for reliable redirect in production
-      window.location.href = '/';
+      console.log('✅ Authenticated user accessing signin, redirecting to home');
+      router.replace('/');
       return;
     }
     
-    // Handle unauthenticated user on protected pages
+    // Only redirect if not authenticated and not already on signin page
     if (!isAuthenticated && pathname !== '/signin') {
-      console.log('❌ Unauthenticated user on protected page, redirecting to signin...');
-      window.location.href = '/signin';
-      return;
+      console.log('❌ Unauthenticated user, redirecting to /signin');
+      router.replace('/signin');
     }
-    
-    console.log('✅ No redirect needed - user is in correct place');
-  }, [initialized, isAuthenticated, pathname]); // ✅ React to these state changes
+  }, [initialized, isAuthenticated, pathname, router]);
 
-  // ✅ Show loading only if not initialized
-  if (!initialized) {
+  // ✅ KEY LOGIC: Only show loading when we have potential authentication to check
+  const shouldShowLoading = !initialized && isLoading;
+  
+  // ✅ Show loading only when:
+  // 1. Not initialized yet AND
+  // 2. We're in the process of checking authentication (isLoading = true)
+  // 3. NOT on signin page (signin should always show the form)
+  if (shouldShowLoading && pathname !== '/signin') {
+    console.log('🔄 Showing authentication loading...');
     return (
-      <div className="min-h-screen flex items-center justify-center bg-pink-50">
-        <div className="flex flex-col items-center space-y-4">
-          <p className="text-gray-600">
-            <Loader className="w-16 h-16 animate-spin text-primary" />
-          </p>
+      <div className="h-screen flex items-center justify-center bg-pink-50">
+          <Loader className="w-16 h-16 animate-spin text-primary" />
         </div>
-      </div>
     );
+  }
+
+  // ✅ If not authenticated and not on signin page, show nothing while redirecting
+  if (!isAuthenticated && pathname !== '/signin' && initialized) {
+    return null;
   }
 
   return <>{children}</>;
