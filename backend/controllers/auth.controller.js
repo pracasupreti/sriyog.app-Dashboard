@@ -23,20 +23,28 @@ const storeRefreshToken=async(userId,refreshToken)=>{
   const setCookies=(res,accessToken,refreshToken)=>{
     const isProduction = process.env.NODE_ENV === "production";
     
+    console.log('🍪 Setting cookies with config:', {
+      isProduction,
+      sameSite: "lax", // ✅ Always use "lax" now - both domains on Vercel
+      secure: isProduction
+    });
+    
     res.cookie("accessToken",accessToken,{
       httpOnly:true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax", // "none" for cross-origin requests in production
+      secure: isProduction, // ✅ HTTPS in production
+      sameSite: "lax", // ✅ "lax" works for same-site (*.vercel.app)
       maxAge: 15*60*1000,
-      domain: isProduction ? undefined : undefined // Let browser handle domain
+      path: '/' // ✅ Available across entire domain
     })
     res.cookie("refreshToken",refreshToken,{
       httpOnly:true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax", // "none" for cross-origin requests in production
+      secure: isProduction, // ✅ HTTPS in production
+      sameSite: "lax", // ✅ "lax" works for same-site (*.vercel.app)
       maxAge:7*24*60*60*1000,
-      domain: isProduction ? undefined : undefined // Let browser handle domain
+      path: '/' // ✅ Available across entire domain
     })
+    
+    console.log('🍪 Cookies set successfully');
   }
 
 
