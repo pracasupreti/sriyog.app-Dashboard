@@ -22,24 +22,25 @@ const storeRefreshToken=async(userId,refreshToken)=>{
 
   const setCookies=(res,accessToken,refreshToken)=>{
     const isProduction = process.env.NODE_ENV === "production";
-    
 
-    
-    res.cookie("accessToken",accessToken,{
-      httpOnly:true,
+    // Share cookies across subdomains in production (api.sriyog.app, dashboard.sriyog.app)
+    const baseCookie = {
+      httpOnly: true,
       secure: isProduction,
-      sameSite: "lax", // ✅ Using 'lax' for same-domain setup (was "none" for cross-origin)
-      maxAge: 15*60*1000,
-      path: '/' // ✅ Explicit path instead of redundant domain setting
-    })
-    res.cookie("refreshToken",refreshToken,{
-      httpOnly:true,
-      secure: isProduction,
-      sameSite: "lax", // ✅ Using 'lax' for same-domain setup (was "none" for cross-origin)
-      maxAge:7*24*60*60*1000,
-      path: '/' // ✅ Explicit path instead of redundant domain setting
-    })
-    
+      sameSite: "lax",
+      path: '/',
+      domain: isProduction ? ".sriyog.app" : undefined,
+    };
+
+    res.cookie("accessToken", accessToken, {
+      ...baseCookie,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      ...baseCookie,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
   }
 
 
@@ -133,18 +134,16 @@ export const Logout = async (req, res) => {
 		}
 
 		// Clear cookies with same settings as when they were set
-		res.clearCookie("accessToken", {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: "lax", // ✅ Match the sameSite setting used when setting cookies
-			path: '/'
-		});
-		res.clearCookie("refreshToken", {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: "lax", // ✅ Match the sameSite setting used when setting cookies
-			path: '/'
-		});
+    const clearOpts = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: '/',
+      domain: isProduction ? ".sriyog.app" : undefined,
+    };
+
+    res.clearCookie("accessToken", clearOpts);
+    res.clearCookie("refreshToken", clearOpts);
 		
 		res.json({ message: "Logged out successfully" });
 	} catch (error) {
@@ -257,16 +256,21 @@ export const refreshToken = async (req, res) => {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
 
-		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+    const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
     const isProduction = process.env.NODE_ENV === "production";
-    
 
-		res.cookie("accessToken", accessToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: "lax", // ✅ Using 'lax' for same-domain setup (was "none" for cross-origin)
-			maxAge:  15*60*1000,
-		});
+    const baseCookie = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: '/',
+      domain: isProduction ? ".sriyog.app" : undefined,
+    };
+
+    res.cookie("accessToken", accessToken, {
+      ...baseCookie,
+      maxAge: 15 * 60 * 1000,
+    });
 		
 
      const user = await User.findById(decoded.userId).select("-Password");
