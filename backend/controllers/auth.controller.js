@@ -23,28 +23,23 @@ const storeRefreshToken=async(userId,refreshToken)=>{
   const setCookies=(res,accessToken,refreshToken)=>{
     const isProduction = process.env.NODE_ENV === "production";
     
-    console.log('🍪 Setting cookies with config:', {
-      isProduction,
-      sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain in production
-      secure: isProduction
-    });
+
     
     res.cookie("accessToken",accessToken,{
       httpOnly:true,
-      secure: isProduction, // ✅ Must be true for sameSite: "none"
-      sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain
+      secure: isProduction,
+      sameSite: "lax", // ✅ Using 'lax' for same-domain setup (was "none" for cross-origin)
       maxAge: 15*60*1000,
-      path: '/' // ✅ Available across entire domain
+      path: '/' // ✅ Explicit path instead of redundant domain setting
     })
     res.cookie("refreshToken",refreshToken,{
       httpOnly:true,
-      secure: isProduction, // ✅ Must be true for sameSite: "none"
-      sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain
+      secure: isProduction,
+      sameSite: "lax", // ✅ Using 'lax' for same-domain setup (was "none" for cross-origin)
       maxAge:7*24*60*60*1000,
-      path: '/' // ✅ Available across entire domain
+      path: '/' // ✅ Explicit path instead of redundant domain setting
     })
     
-    console.log('🍪 Cookies set successfully');
   }
 
 
@@ -129,13 +124,28 @@ export const Login = async (req, res) => {
 export const Logout = async (req, res) => {
 	try {
 		const refreshToken = req.cookies.refreshToken;
+		const isProduction = process.env.NODE_ENV === "production";
+		
+		
 		if (refreshToken) {
 			const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 			await redis.del(`refresh_token:${decoded.userId}`);
 		}
 
-		res.clearCookie("accessToken");
-		res.clearCookie("refreshToken");
+		// Clear cookies with same settings as when they were set
+		res.clearCookie("accessToken", {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: "lax", // ✅ Match the sameSite setting used when setting cookies
+			path: '/'
+		});
+		res.clearCookie("refreshToken", {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: "lax", // ✅ Match the sameSite setting used when setting cookies
+			path: '/'
+		});
+		
 		res.json({ message: "Logged out successfully" });
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
@@ -249,14 +259,17 @@ export const refreshToken = async (req, res) => {
 
 		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
     const isProduction = process.env.NODE_ENV === "production";
+    
 
-	res.cookie("accessToken", accessToken, {
-		httpOnly: true,
-		secure: isProduction,
-		sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain
-		maxAge:  15*60*1000,
-		path: '/' // ✅ Available across entire domain
-	});     const user = await User.findById(decoded.userId).select("-Password");
+		res.cookie("accessToken", accessToken, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: "lax", // ✅ Using 'lax' for same-domain setup (was "none" for cross-origin)
+			maxAge:  15*60*1000,
+		});
+		
+
+     const user = await User.findById(decoded.userId).select("-Password");
 
 		res.json({ message: "Token refreshed successfully", user });
 	} catch (error) {
