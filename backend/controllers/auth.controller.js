@@ -142,8 +142,20 @@ export const Logout = async (req, res) => {
       domain: isProduction ? ".sriyog.app" : undefined,
     };
 
+    // Clear cross-subdomain cookies
     res.clearCookie("accessToken", clearOpts);
     res.clearCookie("refreshToken", clearOpts);
+
+    // Also clear potential legacy host-only cookies scoped to api.sriyog.app
+    const legacyHostOnlyOpts = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: '/',
+      // domain intentionally undefined to target host-only cookie
+    };
+    res.clearCookie("accessToken", legacyHostOnlyOpts);
+    res.clearCookie("refreshToken", legacyHostOnlyOpts);
 		
 		res.json({ message: "Logged out successfully" });
 	} catch (error) {
