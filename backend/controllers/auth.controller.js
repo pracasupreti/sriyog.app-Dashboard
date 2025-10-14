@@ -250,14 +250,13 @@ export const refreshToken = async (req, res) => {
 		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
     const isProduction = process.env.NODE_ENV === "production";
 
-		res.cookie("accessToken", accessToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? "none" : "lax", // ✅ This should match your other cookies
-			maxAge:  15*60*1000,
-		});
-
-     const user = await User.findById(decoded.userId).select("-Password");
+	res.cookie("accessToken", accessToken, {
+		httpOnly: true,
+		secure: isProduction,
+		sameSite: "lax", // ✅ Same as other cookies - both domains on Vercel
+		maxAge:  15*60*1000,
+		path: '/' // ✅ Available across entire domain
+	});     const user = await User.findById(decoded.userId).select("-Password");
 
 		res.json({ message: "Token refreshed successfully", user });
 	} catch (error) {
