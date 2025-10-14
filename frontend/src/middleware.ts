@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('accessToken')?.value;
 
   // Protected routes that require authentication
-  const protectedRoutes = ['/', '/dashboard', '/profile', '/admin'];
+  const protectedRoutes = ['/', '/waiting-professionals', '/profile', '/admin'];
   const authRoutes = ['/signin', '/signup'];
 
   // Check if current path is protected

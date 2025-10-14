@@ -9,10 +9,10 @@ console.log('NEXT_PUBLIC_API_BASE_URL_PROD:', process.env.NEXT_PUBLIC_API_BASE_U
 const getBaseURL = () => {
   if (process.env.NODE_ENV === "production") {
     // Use custom domain for production (same-domain as dashboard.sriyog.app)
-    return process.env.NEXT_PUBLIC_API_BASE_URL_PROD || 'https://api.sriyog.app';
+    return process.env.NEXT_PUBLIC_API_BASE_URL_PROD || 'https://api.sriyog.app/api';
   }
   // Development: use local server
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 };
 
 const axiosInstance = axios.create({

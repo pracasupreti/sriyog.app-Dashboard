@@ -143,7 +143,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     await get().checkAuth();
   },
-     refreshToken: async () => { 
+  refreshToken: async () => { 
 		// if(get().isLoading) return;
 		try {
        console.log('🔄 Attempting to refresh token...');
