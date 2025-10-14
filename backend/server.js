@@ -14,15 +14,32 @@ const app=express()
 await connectDB();
 
 app.use(cors({
-    origin: [
-        'http://localhost:3000',                           // Next.js dev server
-        'http://localhost:3001',                           // Next.js dev server
-        'http://localhost:5173',                           // Vite dev server  
-        'http://localhost:5174',                           // Vite dev server (alternative port)
-        'http://192.168.1.69:3000',                      // Your local network IP
-        'https://sriyogappdashboard.vercel.app',          // Old frontend URL
-        'https://sriyog-app-dashboard-frontend.vercel.app', // ✅ NEW frontend URL
-    ],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        // Allow all localhost origins
+        if (origin.includes('localhost')) {
+            return callback(null, true);
+        }
+        
+        // Allow all vercel.app subdomains
+        if (origin.includes('vercel.app')) {
+            return callback(null, true);
+        }
+        
+        // Allow specific origins
+        const allowedOrigins = [
+            'https://sriyogappdashboard.vercel.app',
+            'https://sriyog-app-dashboard-frontend.vercel.app',
+        ];
+        
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],

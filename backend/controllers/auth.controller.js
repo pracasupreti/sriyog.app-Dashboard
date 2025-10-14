@@ -25,21 +25,21 @@ const storeRefreshToken=async(userId,refreshToken)=>{
     
     console.log('🍪 Setting cookies with config:', {
       isProduction,
-      sameSite: "lax", // ✅ Always use "lax" now - both domains on Vercel
+      sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain in production
       secure: isProduction
     });
     
     res.cookie("accessToken",accessToken,{
       httpOnly:true,
-      secure: isProduction, // ✅ HTTPS in production
-      sameSite: "lax", // ✅ "lax" works for same-site (*.vercel.app)
+      secure: isProduction, // ✅ Must be true for sameSite: "none"
+      sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain
       maxAge: 15*60*1000,
       path: '/' // ✅ Available across entire domain
     })
     res.cookie("refreshToken",refreshToken,{
       httpOnly:true,
-      secure: isProduction, // ✅ HTTPS in production
-      sameSite: "lax", // ✅ "lax" works for same-site (*.vercel.app)
+      secure: isProduction, // ✅ Must be true for sameSite: "none"
+      sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain
       maxAge:7*24*60*60*1000,
       path: '/' // ✅ Available across entire domain
     })
@@ -253,7 +253,7 @@ export const refreshToken = async (req, res) => {
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
 		secure: isProduction,
-		sameSite: "lax", // ✅ Same as other cookies - both domains on Vercel
+		sameSite: isProduction ? "none" : "lax", // ✅ "none" for cross-subdomain
 		maxAge:  15*60*1000,
 		path: '/' // ✅ Available across entire domain
 	});     const user = await User.findById(decoded.userId).select("-Password");
