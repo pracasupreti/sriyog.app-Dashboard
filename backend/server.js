@@ -16,10 +16,8 @@ await connectDB();
 app.use(cors({
     origin: [
         'http://localhost:3000',                    // Next.js dev server
-        'http://localhost:5173',                    // Vite dev server  
-        'http://localhost:5174',                    // Vite dev server (alternative port)
         'http://192.168.1.69:3000',               // Your local network IP
-        'https://sriyogappdashboard.vercel.app',   // Your Vercel deployment
+        'https://sriyog-app-dashboard-frontend.vercel.app/'   // Your Vercel deployment
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
