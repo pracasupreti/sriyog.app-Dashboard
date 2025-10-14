@@ -11,6 +11,8 @@ dotenv.config()
 
 const app=express()
 
+await connectDB();
+
 app.use(cors({
     origin: [
         'http://localhost:3000',                    // Next.js dev server
@@ -35,7 +37,7 @@ app.use("/api/professionaluser",professionalUserRoutes)
 
 const PORT=process.env.PORT || 3000
 
-app.listen(PORT,()=>{
-    console.log("server is running on localhost:" +PORT);
-    connectDB();
+app.listen(PORT,async()=>{
+    console.log(`Server is running on port ${PORT}`);
+
 })
