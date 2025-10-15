@@ -1,6 +1,7 @@
 import express from "express";
 
 import {  getJoinFormById, getWaitingProfessionals, updateUserStatus } from '../controllers/professional.controller.js';
+// import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router=express.Router();
 

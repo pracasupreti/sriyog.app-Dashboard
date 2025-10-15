@@ -146,9 +146,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   refreshToken: async () => { 
 		// if(get().isLoading) return;
 		try {
-       console.log('🔄 Attempting to refresh token...');
+      console.log('🔄 Attempting to refresh token...');
+      console.log('⏰ Current time:', new Date().toISOString());
+      console.log('🍪 Available cookies:', document.cookie);
+      
 			const response = await axiosInstance.post("/auth/refresh-token");
       console.log('✅ Token refresh successful:', response.data);
+      
           if (response.data.user) {
         set({ 
           user: response.data.user,
@@ -225,21 +229,27 @@ axiosInstance.interceptors.response.use(
       
       try {
         console.log('🔄 401 detected, attempting token refresh...');
+        console.log('📍 Original URL:', originalRequest.url);
+        console.log('🍪 Current cookies:', document.cookie);
+        console.log('⏰ Time:', new Date().toISOString());
         
-        // If there's already a refresh in progress, wait for it
-        if (refreshPromise) {
+        // ✅ Fixed: Always use the same promise and reset properly
+        if (!refreshPromise) {
+          console.log('🚀 Starting new token refresh...');
+          refreshPromise = useAuthStore.getState().refreshToken();
+        } else {
           console.log('⏳ Waiting for existing refresh promise...');
-          await refreshPromise;
-          return axiosInstance(originalRequest);
         }
 
-        // Start new refresh promise
-        console.log('🚀 Starting new token refresh...');
-        refreshPromise = useAuthStore.getState().refreshToken();
+        // Wait for refresh to complete
         await refreshPromise;
+        
+        // Reset the promise after completion
         refreshPromise = null;
         
         console.log('✅ Token refreshed, retrying original request...');
+        
+        // ✅ Retry the original request (cookies will have new token)
         return axiosInstance(originalRequest);
           
       } catch (refreshError: unknown) {
@@ -249,6 +259,7 @@ axiosInstance.interceptors.response.use(
         // Only logout if it's actually a refresh token failure
         const authStore = useAuthStore.getState();
         if (authStore.isAuthenticated) {
+          console.log('🚪 Logging out user due to refresh failure...');
           await authStore.logout();
         }
         
@@ -256,6 +267,7 @@ axiosInstance.interceptors.response.use(
       }
     }
     
+    console.log(`❌ Non-401 error or already retried: ${error.response?.status}`, originalRequest.url);
     return Promise.reject(error);
   }
 );
