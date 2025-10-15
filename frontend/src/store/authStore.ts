@@ -91,7 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     set({ isUserLoggingOut: true });
     try {
-      await axiosInstance.get('/auth/logout');
+      await axiosInstance.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -128,7 +128,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('Auth check failed:', error);
       // Optional: Clear stale cookies
       try {
-        await axiosInstance.get('/auth/logout');
+        await axiosInstance.post('/auth/logout');
       } catch {}
       
       set({ 

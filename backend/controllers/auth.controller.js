@@ -124,6 +124,12 @@ export const Login = async (req, res) => {
 
 export const Logout = async (req, res) => {
 	try {
+		// ✅ CRITICAL: Prevent caching to ensure logout always executes
+		res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
+		res.setHeader('Surrogate-Control', 'no-store');
+		
 		const refreshToken = req.cookies.refreshToken;
 		const isProduction = process.env.NODE_ENV === "production";
 		

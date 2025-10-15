@@ -53,10 +53,24 @@ import MoreDotIcon from "./more-dot.svg";
 import BellIcon from "./bell.svg";
 import Professional from "./professionals.svg";
 import WaitingProfessional from "./waitingProfessionals.svg"
+import PostTasks from "./postTasks.svg"
+import RequestCallback from "./requestcallbacks.svg"
+import AppInstallation from "./appInstallation.svg"
+import TopProfessionals from "./topProfessionals.svg"
+import ActiveProfessionals from "./activeProfessionals.svg"
+import SuspendedProfessionals from "./suspendedProfessionals.svg"
+import MembershipRegisteration from "./membershipRegisteration.svg"
 
 export {
+  MembershipRegisteration,
+  SuspendedProfessionals,
+  ActiveProfessionals,
+  AppInstallation,
+  PostTasks,
   Professional,
+  TopProfessionals,
   WaitingProfessional,
+  RequestCallback,
   DownloadIcon,
   BellIcon,
   MoreDotIcon,

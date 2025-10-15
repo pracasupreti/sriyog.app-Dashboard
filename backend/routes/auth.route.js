@@ -6,7 +6,7 @@ const router=express.Router();
 
 router.post("/signup", SignUp);
 router.post("/login", Login);
-router.get("/logout",Logout)
+router.post("/logout",Logout)
 router.get('/profile',protectRoute,getProfile)
 router.post('/refresh-token', refreshToken)
 // router.post("/Uprofile", protectRoute, updateProfile);
