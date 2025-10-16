@@ -27,7 +27,19 @@ const userSchema=new mongoose.Schema({
         type:String,
         enum:["super admin","admin"],
         default:"super admin"
-    }
+    },
+     isVerified:{
+        type:Boolean,
+        default:false
+    },
+    lastLogin:{
+    type:Date,
+    default:()=>Date.now()
+    },
+    passwordResetToken:String,
+    PasswordResetTokenExpiresAt:Date,
+    verificationToken:String,
+    verificationTokenExpiresAt:Date
 },
 {
 timestamps:true
