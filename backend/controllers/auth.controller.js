@@ -300,3 +300,90 @@ export const refreshToken = async (req, res) => {
 	}
 }
 
+
+export const verifyEmail=async(req,res)=>{
+  try{
+    const {code}=req.body;
+    const user=await User.findOne({'verificationToken':code,'verificationTokenExpiresAt':{$gt:new Date()}});
+    if(!user) return res.status(400).json({error:'Token has been expired ..invalid'});
+    user.isVerified=true;
+    user.verificationToken=undefined;
+    user.verificationTokenExpiresAt=undefined;
+    await user.save()
+    const userDetail=user._doc;
+    delete userDetail.Password;
+    res.status(200).json({message:"user verified successfully",user:userDetail});
+  }catch(err){
+    console.log('error in verifyEmail controller',err.message);
+    res.status(500).json({error:"Internal Server Error"});
+  }
+}
+
+export const forgetPassword=async(req,res)=>{
+      try{
+        const {email}=req.body;
+        const user=await User.findOne({Email:email});
+        if(!user){
+          res.status(400).json({error:"Email not found"});
+          return;
+        }
+        const resetToken=crypto.randomBytes(20).toString('hex');
+        const resetTokenExpiresAt=Date.now()+24*60*60*1000;
+
+        user.passwordResetToken=resetToken;
+        user.PasswordResetTokenExpiresAt=resetTokenExpiresAt;
+        await user.save();
+        await sendForgetPasswordEmail(user.Email,`${process.env.CLIENT_URL}/reset-password/${resetToken}`);
+        res.status(200).json({message:"reset password link sent to your email"});
+      }catch(error){
+        console.log("error in forgetPassword controller",error.message);
+        res.status(500).json({error:"internal server"});
+      }
+}
+
+export const resetPassword=async(req,res)=>{
+  try{
+    const {newPassword}=req.body;
+    const {token}=req.params;
+    const user=await User.findOne({passwordResetToken:token});
+    if(!user){
+      res.status(400).json({error:"user not found"});
+      return;
+    }
+    if(user.PasswordResetTokenExpiresAt<Date.now()){
+      res.status(400).json({error:"reset token expired"});
+      return;
+      }
+    // const salt=await bcrypt.genSalt(10);
+    // const hashPassword=await bcrypt.hash(newPassword,salt);
+      user.Password= newPassword;
+      await sendPasswordResetSuccessEmail(user.Email);
+      user.passwordResetToken=undefined;
+      user.PasswordResetTokenExpiresAt=undefined;
+      await user.save();
+       res.status(200).json({message:"password reset successfully"});
+  }catch(error){
+    console.log("error in resetPassword controller",error.message);
+    res.status(500).json({error:"internal server error"});
+  }
+}
+
+export const verifyEmailLink=async(req,res)=>{
+  try{
+    const userId= req.user._id; 
+     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const user=await User.findByIdAndUpdate(userId,{ verificationToken: verificationToken,
+    verificationTokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)},{ new: true });
+    if(!user){
+      return res.status(400).json({error:"user not found"});
+    }
+    await sendVerificationEmail(req.user.Email, verificationToken);
+    res.status(200).json({message:"verification link sent to your email",success:true});
+  }catch(err){
+    console.log('error in verifyEmailLink controller',err.message);
+    res.status(500).json({error:"Internal Server Error"});
+  }
+}
+
+
+
