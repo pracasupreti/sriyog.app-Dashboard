@@ -101,7 +101,7 @@ import { useAuthStore } from "@/store/authStore";
 						</div>
 					</div>
 					<div className="flex justify-end mb-4">
-						<Link href="#" className="text-sm text-gray-700 hover:underline">Forgot Password!!</Link>
+						<Link href="/#" className="text-sm text-gray-700 hover:underline">Forgot Password!!</Link>
 					</div >
 					<div className="flex items-center justify-end">
 						<button
@@ -119,10 +119,10 @@ import { useAuthStore } from "@/store/authStore";
 					</div>
 
 							</form>
-							<div className="mt-3 text-center text-xs text-gray-700">
+							{/* <div className="mt-3 text-center text-xs text-gray-700">
 								Don’t have an account ?{' '}
 								<Link href="#" className="text-[#8B1C1C] font-semibold hover:underline">Sign Up Here</Link>
-							</div>
+							</div> */}
 						</div>
 					</div>
 				);

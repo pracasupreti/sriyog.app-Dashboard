@@ -1,6 +1,8 @@
 import User from "../model/user.model.js";
 import jwt from "jsonwebtoken"
 import {redis} from "../lib/redis.js"
+import crypto from 'crypto';
+import { sendForgetPasswordEmail, sendPasswordResetSuccessEmail } from "../nodemailer/email.js";
 
 
 

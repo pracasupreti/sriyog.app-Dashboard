@@ -9,6 +9,13 @@ interface User {
   Fullname: string;
   Photo: string;
   role: string;
+  isVerified:boolean;
+  lastLogin:Date;
+  passwordResetToken?:string;
+  passwordResetTokenExpiresAt?:Date,
+  verificationToken?:string;
+  verificationTokenExpiresAt?:Date
+
 }
 
 interface AuthState {
@@ -17,6 +24,8 @@ interface AuthState {
   isUserLoggingOut:boolean;
   isAuthenticated: boolean;
   initialized: boolean;
+  isresetLinkSending:boolean;
+  isResettingPassword:boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -24,6 +33,8 @@ interface AuthState {
 //   setLoading: (loading: boolean) => void;
   initialize: () => Promise<void>;
   refreshToken: () => Promise<unknown>;
+  forgetPassword:(email:string)=>Promise<unknown>;
+  resetPassword:(token:string,newPassword:string,confirmPassword:string)=>Promise<unknown>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -32,6 +43,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isUserLoggingOut:false,
   isAuthenticated: false,
   initialized: false,
+  isresetLinkSending:false,
+  isResettingPassword:false,
 
 //   setUser: (user) => {
 //     set({ user, isAuthenticated: !!user });
@@ -176,6 +189,89 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 	}
 
 }
+,   
+forgetPassword:async(email)=>{
+        set({isresetLinkSending:true})
+        try{
+            const response=await axiosInstance.post('/auth/forget-password',{email})
+            if(response.status===200){
+                toast.success('Password reset link sent to your email')
+                set({isresetLinkSending:false})
+            }
+            return response;
+        }catch(error:unknown){
+            console.log(error)
+            set({isresetLinkSending:false})
+            if (error instanceof AxiosError) {
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          "Failed to send password reset link";
+      toast.error(errorMessage);
+    } else {
+      // Handle non-Axios errors
+      toast.error("Failed to send password reset link");
+    }
+        }
+    },
+
+// resendVerificationEmail:async()=>{
+//         set({isSendingVerification:true,isEmailvefificationlinksent:false})
+//         try{
+//             const response=await axios.get('/auth/verify-emailLink')
+//             if(response.status===200){
+//                 toast.success('verification link sent to your email')
+//                 set({isEmailVerificationLinkSent:true,isSendingVerification:false})
+//             }
+//             return response;
+//         }catch(error){
+//             console.log(error)
+//             set({isSendingVerification:false})
+//             toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to send verification email")
+//         }
+//     },
+//     verifyEmail:async(code)=>{
+//         set({isVerifyingEmail:true})
+//         try{
+//             const response=await axios.post('/auth/verify-email',{code})
+//             if(response.status===200){
+//                 toast.success('Email verified successfully')
+//                 set({isVerifyingEmail:false,user:response.data.user})
+//             }
+//             return response;
+//         }catch(error){
+//             console.log(error)
+//             set({isVerifyingEmail:false})
+//             toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to verify email")
+//         }
+//     },
+
+    resetPassword:async(token,newPassword,confirmPassword)=>{
+        if(newPassword !== confirmPassword){
+            return toast.error('passwords do not match');
+        }
+        set({isResettingPassword:true})
+
+        try{
+            const response=await axiosInstance.post(`/auth/reset-password/${token}`,{newPassword})
+            if(response.status===200){
+                toast.success('Password reset successfully')
+                set({isResettingPassword:false})
+            }
+            return response;
+        }catch(error){
+            console.log(error)
+            set({isResettingPassword:false})
+             if (error instanceof AxiosError) {
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          "Failed to reset the password";
+      toast.error(errorMessage);
+    } else {
+      // Handle non-Axios errors
+      toast.error("Failed to reset the password");
+    }
+        }
+    },
 }));
 
 // let refreshPromise:Promise<unknown>|null=null;
@@ -228,11 +324,6 @@ axiosInstance.interceptors.response.use(
       extendedRequest._retry = true;
       
       try {
-        console.log('🔄 401 detected, attempting token refresh...');
-        console.log('📍 Original URL:', originalRequest.url);
-        console.log('🍪 Current cookies:', document.cookie);
-        console.log('⏰ Time:', new Date().toISOString());
-        
         // ✅ Fixed: Always use the same promise and reset properly
         if (!refreshPromise) {
           console.log('🚀 Starting new token refresh...');
@@ -258,6 +349,7 @@ axiosInstance.interceptors.response.use(
         
         // Only logout if it's actually a refresh token failure
         const authStore = useAuthStore.getState();
+        console.log('hi i am from here',authStore)
         if (authStore.isAuthenticated) {
           console.log('🚪 Logging out user due to refresh failure...');
           await authStore.logout();

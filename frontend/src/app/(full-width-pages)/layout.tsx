@@ -1,4 +1,3 @@
-import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function FullWidthPageLayout({
   children,
@@ -6,6 +5,6 @@ export default function FullWidthPageLayout({
   children: React.ReactNode;
 }) {
   return <div>
-    <AuthGuard>{children}</AuthGuard>
+    {children}
     </div>;
 }
