@@ -60,8 +60,14 @@ import TopProfessionals from "./topProfessionals.svg"
 import ActiveProfessionals from "./activeProfessionals.svg"
 import SuspendedProfessionals from "./suspendedProfessionals.svg"
 import MembershipRegisteration from "./membershipRegisteration.svg"
+import ProfessionsNumber from "./professionsnumber.svg";
+import SubmittedToday from './submittedToday.svg';
+import WaitingProf from './waitingProf.svg';
 
 export {
+  ProfessionsNumber,
+  SubmittedToday,
+  WaitingProf,
   MembershipRegisteration,
   SuspendedProfessionals,
   ActiveProfessionals,

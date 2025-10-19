@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axiosInstance from "@/lib/axios";
 import {
   useReactTable,
@@ -116,8 +116,19 @@ const fetchWaitingProfessionals = async (
   }
 };
 
-// Column definitions
-const columns: ColumnDef<Professional>[] = [
+
+
+export default function WaitingProfessionalsTable() {
+  
+  // State management
+  const [data, setData] = useState<Professional[]>([]);
+  const [initialLoading, setInitialLoading] = useState(true); // For first load
+  const [searchLoading, setSearchLoading] = useState(false); // For search/pagination
+  const [error, setError] = useState<string | null>(null);
+  const [globalFilter, setGlobalFilter] = useState("");
+  
+  // Column definitions
+  const columns: ColumnDef<Professional>[] = useMemo(() => [
   { 
     accessorKey: "_id", 
     header: "Waiting ID",
@@ -201,17 +212,9 @@ const columns: ColumnDef<Professional>[] = [
       )
     },
   },
-];
+],[]);
 
-export default function WaitingProfessionalsTable() {
 
-  // State management
-  const [data, setData] = useState<Professional[]>([]);
-  const [initialLoading, setInitialLoading] = useState(true); // For first load
-  const [searchLoading, setSearchLoading] = useState(false); // For search/pagination
-  const [error, setError] = useState<string | null>(null);
-  const [globalFilter, setGlobalFilter] = useState("");
-  
   // Server-side pagination state
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -296,10 +299,16 @@ export default function WaitingProfessionalsTable() {
     pageCount: totalPages,  // Tell table how many pages exist
   });
 
+  console.log('table is here',table);
+
   const pageIndex = table.getState().pagination.pageIndex;
+  console.log(pageIndex)
   const pageCount = table.getPageCount();
+  console.log(pageCount)
   const pageSize = table.getState().pagination.pageSize;
+  console.log(pageSize)
   const totalRows = totalCount;
+  console.log(totalRows)
 
   // Loading skeleton for initial load
   if (initialLoading) {
