@@ -1,6 +1,7 @@
 
 
 import JoinForm from '../model/joinform.model.js';
+import Profession from '../model/profession.model.js';
 
 export const getWaitingProfessionals = async (req, res) => {
 	try {
@@ -137,3 +138,32 @@ export const updateUserStatus = async (req, res) => {
 		res.status(500).json({ error: err.message });
 	}
 };
+
+
+export const getProfessionalsFilters=async(req,res)=>{
+	 try {
+    // Get unique values for each filter field
+    const professions = await Profession.distinct("Professions");
+    const cities = await JoinForm.distinct("City");
+    const genders = await JoinForm.distinct("Gender");
+    // For dates, you may want to format createdAt to just the date part
+    const datesRaw = await JoinForm.distinct("createdAt");
+    const dates = datesRaw
+      .map(date => new Date(date).toISOString().slice(0, 10))
+      .filter((v, i, a) => a.indexOf(v) === i); // unique YYYY-MM-DD
+
+    res.json({
+      professions,
+      cities,
+      genders,
+      dates,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch filter options" });
+  }
+	
+}
+
+
+
+
