@@ -62,7 +62,7 @@ import SuspendedProfessionals from "./suspendedProfessionals.svg"
 import MembershipRegisteration from "./membershipRegisteration.svg"
 import ProfessionsNumber from "./professionsnumber.svg";
 import SubmittedToday from './submittedToday.svg';
-import WaitingProf from './waitingProf.svg';
+import WaitingProf from './waitingprof.svg';
 
 export {
   ProfessionsNumber,
