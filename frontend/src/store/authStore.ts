@@ -164,6 +164,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log('🍪 Available cookies:', document.cookie);
       
 			const response = await axiosInstance.post("/auth/refresh-token");
+      console.log('hello from china',response)
       console.log('✅ Token refresh successful:', response.data);
       
           if (response.data.user) {
@@ -175,9 +176,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 			return response.data;
 		} catch (error:unknown) {
+      console.log('hello i was called')
             console.error('❌ Token refresh failed:', error);
       
       // Clear auth state on refresh failure
+      
       set({ 
         user: null, 
         isAuthenticated: false,
@@ -301,65 +304,265 @@ forgetPassword:async(email)=>{
 //   }
 // )
 
+// let refreshPromise: Promise<unknown> | null = null;
+// // console.log('hi from refresh promise',refreshPromise)
+
+// axiosInstance.interceptors.response.use(
+//   (response: AxiosResponse) => response,
+//   async (error: AxiosError) => {
+//     const originalRequest = error.config;
+//     console.log(error, 'error from config')
+    
+//     // Type guard to ensure originalRequest exists and add _retry property
+//     if (!originalRequest) {
+//       return Promise.reject(error);
+//     }
+
+//     // Add _retry property to the request config
+//     interface ExtendedAxiosRequestConfig {
+//       _retry?: boolean;
+//     }
+    
+//     const extendedRequest = originalRequest as ExtendedAxiosRequestConfig;
+//     // if(error instanceof AxiosError && error?.response?.data?.message==="Invalid refresh token")
+//     if (
+//   error instanceof AxiosError &&
+//   typeof error.response?.data === "object" &&
+//   error.response?.data !== null &&
+//   "message" in error.response.data &&
+//   (error.response.data as { message?: string }).message === "Invalid refresh token"
+// ){
+//   await useAuthStore.getState().logout();
+//  return Promise.reject(error);  
+
+// }
+
+//     if (error.response?.status === 401 && !extendedRequest._retry) {
+//       extendedRequest._retry = true;
+      
+//       try {
+//         // ✅ Fixed: Always use the same promise and reset properly
+//         if (!refreshPromise) {
+//           console.log('🚀 Starting new token refresh...');
+//           refreshPromise = useAuthStore.getState().refreshToken();
+//         } 
+//         console.log("waiting for existing refresh promise ")
+
+//         // Wait for refresh to complete
+//         console.log(refreshPromise)
+//         await refreshPromise;
+        
+//         // Reset the promise after completion
+//         refreshPromise = null;
+        
+//         console.log('✅ Token refreshed, retrying original request...');
+        
+//         // ✅ Retry the original request (cookies will have new token)
+//         return axiosInstance(originalRequest);
+          
+//       } catch (refreshError: unknown) {
+//         console.error('❌ Token refresh failed, logging out user:', refreshError);
+//         refreshPromise = null;
+        
+//         // const message=refreshError?.response?.data?.message || refreshError?.message || "" ;
+
+//         // if(message==="Invalid refresh token"){
+//         //   await useAuthStore.getState().logout();
+//         //   toast.error("Session expired. please log in again ")
+//         //   return Promise.reject(refreshError);
+//         // }
+//          let message = "";
+//   if (refreshError instanceof AxiosError) {
+//     message = refreshError.response?.data?.message || refreshError.message || "";
+//   } else {
+//     message = (refreshError as any)?.message || "";
+//   }
+
+//   if (message === "Invalid refresh token") {
+//     await useAuthStore.getState().logout();
+//     toast.error("Session expired. Please log in again.");
+//     return Promise.reject(refreshError);
+//   }
+//         // Only logout if it's actually a refresh token failure
+//         const authStore = useAuthStore.getState();
+//         console.log('hi i am from here',authStore)
+//         if (authStore.isAuthenticated) {
+//           console.log('🚪 Logging out user due to refresh failure...');
+//           await authStore.logout();
+//         }
+        
+//         return Promise.reject(refreshError);
+//       }
+//     }
+    
+//     console.log(`❌ Non-401 error or already retried: ${error.response?.status}`, originalRequest.url);
+//     return Promise.reject(error);
+//   }
+// );
+
 let refreshPromise: Promise<unknown> | null = null;
 
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config;
-    
-    // Type guard to ensure originalRequest exists and add _retry property
     if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    // Add _retry property to the request config
     interface ExtendedAxiosRequestConfig {
       _retry?: boolean;
     }
-    
     const extendedRequest = originalRequest as ExtendedAxiosRequestConfig;
 
+    // Handle invalid refresh token immediately
+    if (
+      error instanceof AxiosError &&
+      typeof error.response?.data === "object" &&
+      error.response?.data !== null &&
+      "message" in error.response.data &&
+      (error.response.data as { message?: string }).message === "Invalid refresh token"
+    ) {
+      await useAuthStore.getState().logout();
+      toast.error("Session expired. Please log in again.");
+      return Promise.reject(error);
+    }
+
+    // Handle access token expiration and refresh logic
     if (error.response?.status === 401 && !extendedRequest._retry) {
       extendedRequest._retry = true;
-      
+
       try {
-        // ✅ Fixed: Always use the same promise and reset properly
         if (!refreshPromise) {
-          console.log('🚀 Starting new token refresh...');
           refreshPromise = useAuthStore.getState().refreshToken();
+        }
+        await refreshPromise;
+        refreshPromise = null;
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        refreshPromise = null;
+
+        let message = "";
+        if (refreshError instanceof AxiosError) {
+          message = refreshError.response?.data?.message || refreshError.message || "";
         } else {
-          console.log('⏳ Waiting for existing refresh promise...');
+          message = (refreshError as {message?:string})?.message || "";
         }
 
-        // Wait for refresh to complete
-        await refreshPromise;
-        
-        // Reset the promise after completion
-        refreshPromise = null;
-        
-        console.log('✅ Token refreshed, retrying original request...');
-        
-        // ✅ Retry the original request (cookies will have new token)
-        return axiosInstance(originalRequest);
-          
-      } catch (refreshError: unknown) {
-        console.error('❌ Token refresh failed, logging out user:', refreshError);
-        refreshPromise = null;
-        
-        // Only logout if it's actually a refresh token failure
+        if (message === "Invalid refresh token") {
+          await useAuthStore.getState().logout();
+          toast.error("Session expired. Please log in again.");
+          return Promise.reject(refreshError);
+        }
+
+        // Fallback: logout if still authenticated
         const authStore = useAuthStore.getState();
-        console.log('hi i am from here',authStore)
         if (authStore.isAuthenticated) {
-          console.log('🚪 Logging out user due to refresh failure...');
           await authStore.logout();
         }
-        
         return Promise.reject(refreshError);
       }
     }
-    
-    console.log(`❌ Non-401 error or already retried: ${error.response?.status}`, originalRequest.url);
+
     return Promise.reject(error);
   }
 );
+
+
+// let refreshPromise: Promise<unknown> | null = null;
+// let refreshPromiseReject: ((reason?: any) => void) | null = null;
+
+// axiosInstance.interceptors.response.use(
+//   (response: AxiosResponse) => response,
+//   async (error: AxiosError) => {
+//     const originalRequest = error.config;
+//     if (!originalRequest) return Promise.reject(error);
+
+//     interface ExtendedAxiosRequestConfig { _retry?: boolean }
+//     const extendedRequest = originalRequest as ExtendedAxiosRequestConfig;
+
+//     if (error.response?.status === 401 && !extendedRequest._retry) {
+//       extendedRequest._retry = true;
+
+//       // If no refresh is in progress, start one and save the reject function
+//       if (!refreshPromise) {
+//         refreshPromise = new Promise(async (resolve, reject) => {
+//           refreshPromiseReject = reject;
+//           try {
+//             await useAuthStore.getState().refreshToken();
+//             resolve(true);
+//           } catch (err) {
+//             reject(err);
+//           } finally {
+//             refreshPromise = null;
+//             refreshPromiseReject = null;
+//           }
+//         });
+//       }
+
+//       try {
+//         await refreshPromise;
+//         return axiosInstance(originalRequest);
+//       } catch (refreshError) {
+//         // Reject all waiting requests
+//         if (refreshPromiseReject) {
+//           refreshPromiseReject(refreshError);
+//         }
+//         refreshPromise = null;
+//         refreshPromiseReject = null;
+
+//         let message = "";
+//         if (refreshError instanceof AxiosError) {
+//           message = refreshError.response?.data?.message || refreshError.message || "";
+//         } else {
+//           message = (refreshError as any)?.message || "";
+//         }
+
+//         if (message === "Invalid refresh token") {
+//           await useAuthStore.getState().logout();
+//           toast.error("Session expired. Please log in again.");
+//           window.location.href = "/login";
+//         }
+//         return Promise.reject(refreshError);
+//       }
+//     }
+//     return Promise.reject(error);
+//   }
+// );
+
+// filepath: [authStore.ts](http://_vscodecontentref_/5)
+
+// axiosInstance.interceptors.response.use(
+//   (response: AxiosResponse) => response,
+//   async (error: AxiosError) => {
+//     const originalRequest = error.config;
+//     if (!originalRequest) return Promise.reject(error);
+
+//     interface ExtendedAxiosRequestConfig { _retry?: boolean }
+//     const extendedRequest = originalRequest as ExtendedAxiosRequestConfig;
+
+//     if (error.response?.status === 401 && !extendedRequest._retry) {
+//       extendedRequest._retry = true;
+
+//       try {
+//         await useAuthStore.getState().refreshToken();
+//         return axiosInstance(originalRequest);
+//       } catch (refreshError) {
+//         let message = "";
+//         if (refreshError instanceof AxiosError) {
+//           message = refreshError.response?.data?.message || refreshError.message || "";
+//         } else {
+//           message = (refreshError as any)?.message || "";
+//         }
+
+//         if (message === "Invalid refresh token") {
+//           await useAuthStore.getState().logout();
+//           toast.error("Session expired. Please log in again.");
+//           window.location.href = "/login";
+//         }
+//         return Promise.reject(refreshError);
+//       }
+//     }
+//     return Promise.reject(error);
+//   }
+// );

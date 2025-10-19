@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axios";
 import {
   useReactTable,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
+  // getFilteredRowModel,
+  // getPaginationRowModel,
   flexRender,
   ColumnDef,
 } from "@tanstack/react-table";
@@ -69,35 +69,49 @@ type Professional = {
   updatedAt: string;
 };
 
-// API function
-const fetchWaitingProfessionals = async (): Promise<Professional[]> => {
+// API function with pagination
+const fetchWaitingProfessionals = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = ""
+): Promise<{
+  data: Professional[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}> => {
   try {
-    // console.log('🚀 Fetching from:', axiosInstance.defaults.baseURL + '/professionaluser/waiting');
-    const response = await axiosInstance.get('/professionaluser/waiting');
-    // console.log('✅ API Response:', response);
-    // console.log('📊 Response data:', response.data);
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search })
+    });
+
+    const response = await axiosInstance.get(`/professionaluser/waiting?${params}`);
     
-    // Handle different response structures
-    if (Array.isArray(response.data)) {
-      // console.log('📦 Data is direct array, length:', response.data.length);
-      return response.data;
-    } else if (response.data.data && Array.isArray(response.data.data)) {
-      // console.log('📦 Data is nested in data property, length:', response.data.data.length);
-      return response.data.data;
-    } else if (response.data.success && Array.isArray(response.data.data)) {
-      // console.log('📦 Data has success wrapper, length:', response.data.data.length);
-      return response.data.data;
+    if (response.data.success) {
+      return {
+        data: response.data.data || [],
+        totalCount: response.data.pagination?.totalCount || 0,
+        totalPages: response.data.pagination?.totalPages || 0,
+        currentPage: response.data.pagination?.currentPage || 1,
+        hasNextPage: response.data.pagination?.hasNextPage || false,
+        hasPrevPage: response.data.pagination?.hasPrevPage || false
+      };
     }
-    // console.log('⚠️ Unexpected data structure:', response.data);
-    return [];
+    
+    return {
+      data: [],
+      totalCount: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNextPage: false,
+      hasPrevPage: false
+    };
   } catch (error: unknown) {
-    // console.error('❌ Failed to fetch waiting professionals:', error);
-    // console.error('❌ Error details:', {
-    //   message: error instanceof Error ? error.message : 'Unknown error',
-    //   status: error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response ? error.response.status : undefined,
-    //   statusText: error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'statusText' in error.response ? error.response.statusText : undefined,
-    //   data: error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response ? error.response.data : undefined
-    // });
+    console.error('❌ Failed to fetch waiting professionals:', error);
     throw error;
   }
 };
@@ -157,8 +171,8 @@ const columns: ColumnDef<Professional>[] = [
     
     cell: (info) => {
       const row=info.row.original;
-      return ( 
-      <button className="bg-primary hover:bg-red-700  transition-colors duration-300 p-2 rounded-full">
+  return ( 
+  <button type="button" className="bg-primary hover:bg-red-700  transition-colors duration-300 p-2 rounded-full">
        <Link href={`/waiting-professionals/${row.Phone}`}>
       <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -193,50 +207,102 @@ export default function WaitingProfessionalsTable() {
 
   // State management
   const [data, setData] = useState<Professional[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true); // For first load
+  const [searchLoading, setSearchLoading] = useState(false); // For search/pagination
   const [error, setError] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
+  
+  // Server-side pagination state
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  // Fetch data function
-  const loadData = async () => {
+  // Debounced search to avoid too many API calls
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(globalFilter);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [globalFilter]);
+
+  // Fetch data function with pagination
+  const loadData = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) {
+        setInitialLoading(true);
+      } else {
+        setSearchLoading(true);
+      }
       setError(null);
       
-      const professionals = await fetchWaitingProfessionals();
-      setData(professionals);
+      const result = await fetchWaitingProfessionals(
+        pagination.pageIndex + 1, // API expects 1-based page numbers
+        pagination.pageSize,
+        debouncedSearch
+      );
+      
+      setData(result.data);
+      setTotalCount(result.totalCount);
+      setTotalPages(result.totalPages);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
       console.error('Error loading data:', err);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setInitialLoading(false);
+      } else {
+        setSearchLoading(false);
+      }
     }
-  };
+  },[pagination.pageIndex, pagination.pageSize, debouncedSearch]);
 
-  // Load data on component mount
+  // Load data on first mount
   useEffect(() => {
-    loadData();
+    loadData(true);
   }, []);
 
-  // Table setup
+  // Load data when pagination or search changes (not initial load)
+  useEffect(() => {
+    if (!initialLoading) {
+      loadData(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize, debouncedSearch]);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+  }, [debouncedSearch]);
+
+  // Table setup with manual pagination
   const table = useReactTable({
     data,
     columns,
-    state: { globalFilter },
+    state: { 
+      globalFilter,
+      pagination 
+    },
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true, // Enable manual pagination
+    manualFiltering: true,  // Enable manual filtering
+    pageCount: totalPages,  // Tell table how many pages exist
   });
 
   const pageIndex = table.getState().pagination.pageIndex;
   const pageCount = table.getPageCount();
   const pageSize = table.getState().pagination.pageSize;
-  const totalRows = table.getFilteredRowModel().rows.length;
+  const totalRows = totalCount;
 
-  // Loading skeleton
-  if (loading) {
+  // Loading skeleton for initial load
+  if (initialLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2">
         <div className="animate-pulse">
@@ -264,7 +330,7 @@ export default function WaitingProfessionalsTable() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Failed to load data</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <button
-            onClick={loadData}
+            onClick={() => loadData(false)}
             className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -279,23 +345,40 @@ export default function WaitingProfessionalsTable() {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2">
       {/* Search bar */}
       <div className="mb-4 flex flex-col sm:flex-row gap-2">
-        <input
-          value={globalFilter ?? ""}
-          onChange={e => setGlobalFilter(e.target.value)}
-          placeholder="Search professionals..."
-          className="border rounded px-3 py-2 w-full sm:w-1/3 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-        />
+        <div className="relative w-full sm:w-1/3">
+          <input
+            value={globalFilter ?? ""}
+            onChange={e => setGlobalFilter(e.target.value)}
+            placeholder="Search professionals..."
+            className="border rounded px-3 py-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 pr-8"
+          />
+          {searchLoading && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+            </div>
+          )}
+        </div>
         <button
-          onClick={loadData}
+          onClick={() => loadData(false)}
           className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+          disabled={searchLoading}
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className={`w-4 h-4 ${searchLoading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto max-w-full" >
+      <div className="overflow-x-auto max-w-full relative" >
+        {/* Loading overlay for search/pagination */}
+        {searchLoading && (
+          <div className="absolute inset-0 bg-white/70 dark:bg-gray-800/70 flex items-center justify-center z-10 rounded">
+            <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Loading...</span>
+            </div>
+          </div>
+        )}
         <div className="min-w-max">
           <table className="w-full border-separate border-spacing-y-2 text-sm md:text-base">
           <thead>
@@ -347,6 +430,7 @@ export default function WaitingProfessionalsTable() {
       <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-2">
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             className="border border-red-800 rounded-lg w-8 h-8 flex items-center justify-center text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
@@ -357,6 +441,7 @@ export default function WaitingProfessionalsTable() {
           {getPageNumbers(pageIndex + 1, pageCount).map((num, idx) =>
             typeof num === "number" ? (
               <button
+                type="button"
                 key={`page-${idx}-${num}`}
                 onClick={() => table.setPageIndex(num - 1)}
                 className={`border rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium transition-colors duration-150 ${
@@ -375,6 +460,7 @@ export default function WaitingProfessionalsTable() {
             )
           )}
           <button
+            type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             className="border border-red-800 text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
@@ -390,7 +476,7 @@ export default function WaitingProfessionalsTable() {
           <div className="relative">
             <select
               value={pageSize}
-              onChange={e => table.setPageSize(Number(e.target.value))}
+              onChange={e => setPagination(prev => ({ ...prev, pageSize: Number(e.target.value), pageIndex: 0 }))}
               className="appearance-none border border-red-800 bg-red-100 text-red-800 dark:bg-red-900 dark:border-red-700 dark:text-red-200 rounded px-3 py-1 text-sm font-medium pr-6 cursor-pointer hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
             >
               {[10, 20, 30, 40, 50].map(size => (

@@ -16,7 +16,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     
     // Don't redirect until initialization is complete
     if (!initialized) {
-      console.log('❌ Not initialized yet, waiting...');
       return;
     }
     
@@ -29,7 +28,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     
     // Only redirect if not authenticated and not already on signin page
     if (!isAuthenticated && pathname !== '/signin' ) {
-      console.log('❌ Unauthenticated user, redirecting to /signin');
       router.replace('/signin');
     }
   }, [initialized, isAuthenticated, pathname, router]);

@@ -4,7 +4,7 @@ import {redis} from "../lib/redis.js"
 import crypto from 'crypto';
 import { sendForgetPasswordEmail, sendPasswordResetSuccessEmail } from "../nodemailer/email.js";
 
-
+const MAX_SESSIONS=2;
 
 const generateToken=(userId)=>{ //The userId parameter is used to identify the user in the JWT tokens.
   const accessToken=jwt.sign({userId},process.env.ACCESS_TOKEN_SECRET,{
@@ -20,7 +20,57 @@ const generateToken=(userId)=>{ //The userId parameter is used to identify the u
 
 
 const storeRefreshToken=async(userId,refreshToken)=>{
-  await redis.set(`refresh_token:${userId}`,refreshToken,"Ex",7*24*60*60) }
+  // Create a unique key for this specific refresh token
+  const tokenId = jwt.decode(refreshToken).iat;
+  await redis.set(`refresh_token:${userId}:${tokenId}`,refreshToken,"Ex",7*24*60*60);
+  
+  // Also maintain a set of active tokens for this user (for cleanup)
+  await redis.sadd(`user_tokens:${userId}`, tokenId);
+  await redis.expire(`user_tokens:${userId}`, 7*24*60*60);
+}
+
+// Helper function to revoke all tokens for a user (useful for security incidents)
+const revokeAllUserTokens = async (userId) => {
+  try {
+    const tokenIds = await redis.smembers(`user_tokens:${userId}`);
+    
+    if (tokenIds && tokenIds.length > 0) {
+      // Delete all refresh tokens for this user
+      const pipeline = redis.pipeline();
+      tokenIds.forEach(tokenId => {
+        pipeline.del(`refresh_token:${userId}:${tokenId}`);
+      });
+      await pipeline.exec();
+      
+      // Clear the user's token set
+      await redis.del(`user_tokens:${userId}`);
+    }
+  } catch (error) {
+    console.error('Error revoking user tokens:', error);
+  }
+}
+
+// Helper function to limit concurrent sessions (optional - uncomment if needed)
+const limitUserSessions = async (userId, maxSessions = 5) => {
+  try {
+    const tokenIds = await redis.smembers(`user_tokens:${userId}`);
+    
+    if (tokenIds && tokenIds.length > maxSessions) {
+      // Sort by timestamp and remove oldest tokens
+      const sortedTokenIds = tokenIds.sort((a, b) => parseInt(a) - parseInt(b));
+      const tokensToRemove = sortedTokenIds.slice(0, tokenIds.length - maxSessions );
+      
+      const pipeline = redis.pipeline();
+      tokensToRemove.forEach(tokenId => {
+        pipeline.del(`refresh_token:${userId}:${tokenId}`);
+        pipeline.srem(`user_tokens:${userId}`, tokenId);
+      });
+      await pipeline.exec();
+    }
+  } catch (error) {
+    console.error('Error limiting user sessions:', error);
+  }
+}
 
   const setCookies=(res,accessToken,refreshToken)=>{
     const isProduction = process.env.NODE_ENV === "production";
@@ -67,6 +117,7 @@ export const SignUp = async (req, res) => {
     const { accessToken, refreshToken } = generateToken(user._id);  //This function creates JWT tokens (usually one short-lived access token and one long-lived refresh token).
     // await storeRefreshToken(user._id, refreshToken);  //only if we want to store the token in redis
         await storeRefreshToken(user._id,refreshToken)
+        await limitUserSessions(user._id, MAX_SESSIONS)
         setCookies(res, accessToken, refreshToken);
 
     res.status(201).json({
@@ -100,6 +151,7 @@ export const Login = async (req, res) => {
     if (user && (await user.comparePassword(Password))) {
       const { accessToken, refreshToken } = generateToken(user._id);
       await storeRefreshToken(user._id, refreshToken);
+      await limitUserSessions(user._id, MAX_SESSIONS)
       setCookies(res, accessToken, refreshToken);
       res.status(200).json({
         success:true,
@@ -137,8 +189,19 @@ export const Logout = async (req, res) => {
 		
 		
 		if (refreshToken) {
-			const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-			await redis.del(`refresh_token:${decoded.userId}`);
+			try {
+				const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+				const tokenId = decoded.iat;
+				
+				// Remove this specific token
+				await redis.del(`refresh_token:${decoded.userId}:${tokenId}`);
+				
+				// Remove from user's active tokens set
+				await redis.srem(`user_tokens:${decoded.userId}`, tokenId);
+			} catch (error) {
+				console.log('Error verifying refresh token during logout:', error.message);
+				// Continue with logout even if token verification fails
+			}
 		}
 
 		// Clear cookies with same settings as when they were set
@@ -270,8 +333,11 @@ export const refreshToken = async (req, res) => {
 		}
 
 		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+		const tokenId = decoded.iat; // Get the issued timestamp
+		const storedToken = await redis.get(`refresh_token:${decoded.userId}:${tokenId}`);
 
+   
+    
 		if (storedToken !== refreshToken) {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
@@ -384,6 +450,50 @@ export const verifyEmailLink=async(req,res)=>{
   }catch(err){
     console.log('error in verifyEmailLink controller',err.message);
     res.status(500).json({error:"Internal Server Error"});
+  }
+}
+
+// Logout from all devices
+export const logoutAllDevices = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (refreshToken) {
+      try {
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        // Revoke all refresh tokens for this user
+        await revokeAllUserTokens(decoded.userId);
+      } catch (error) {
+        console.log('Error verifying token during logout all:', error.message);
+      }
+    }
+
+    // Clear cookies
+    const clearOpts = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: '/',
+      domain: isProduction ? ".sriyog.app" : undefined,
+    };
+
+    res.clearCookie("accessToken", clearOpts);
+    res.clearCookie("refreshToken", clearOpts);
+
+    const legacyHostOnlyOpts = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: '/',
+    };
+    res.clearCookie("accessToken", legacyHostOnlyOpts);
+    res.clearCookie("refreshToken", legacyHostOnlyOpts);
+
+    res.json({ message: "Logged out from all devices successfully" });
+  } catch (error) {
+    console.log("Error in logoutAllDevices controller", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 }
 
