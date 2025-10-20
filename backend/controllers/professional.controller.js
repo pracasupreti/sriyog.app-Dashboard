@@ -2,6 +2,7 @@
 
 import JoinForm from '../model/joinform.model.js';
 import Profession from '../model/profession.model.js';
+import ProfessionalUser from '../model/ProfessionalUser.model.js';
 
 // export const getWaitingProfessionals = async (req, res) => {
 // 	try {
@@ -276,7 +277,7 @@ export const updateUserStatus = async (req, res) => {
 	try {
 		const { id } = req.params;
 		const { status } = req.body;
-		if (!['Basic', 'Professional', 'Premium', 'Suspended', 'Offline'].includes(status)) {
+		if (!['Basic', 'ProfessionalUser', 'Premium', 'Suspended', 'Offline'].includes(status)) {
 			return res.status(400).json({ error: 'Invalid status value' });
 		}
 		const updatedUser = await JoinForm.findByIdAndUpdate(id, { status }, { new: true });
@@ -314,6 +315,41 @@ export const getProfessionalsFilters=async(req,res)=>{
 	
 }
 
+
+
+export const getWaitingProfessionalsKPIs = async (req, res) => {
+  try {
+    // Total Professionals
+    const totalProfessionals = await ProfessionalUser.countDocuments();
+
+    // Waiting Professionals
+    const waitingProfessionals = await JoinForm.countDocuments();
+
+    // Number of Professions (distinct)
+    const professions = await ProfessionalUser.distinct("Profession");
+    const numberOfProfessions = professions.length;
+
+    // Submitted Today (waiting professionals submitted today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const submittedToday = await JoinForm.countDocuments({
+      // status: "waiting",
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    res.json({
+      totalProfessionals,
+      waitingProfessionals,
+      numberOfProfessions,
+      submittedToday
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch KPIs", details: err.message });
+  }
+};
 
 
 
