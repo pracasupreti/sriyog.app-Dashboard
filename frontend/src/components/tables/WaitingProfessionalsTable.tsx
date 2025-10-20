@@ -16,7 +16,7 @@ import Image from "next/image";
 // Simple, ACTUALLY bulletproof pagination helper
 function getPageNumbers(current: number, total: number) {
   const pages: (number | string)[] = [];
-  
+
   if (total <= 7) {
     // If total pages <= 7, show all pages
     for (let i = 1; i <= total; i++) {
@@ -73,7 +73,11 @@ type Professional = {
 const fetchWaitingProfessionals = async (
   page: number = 1,
   limit: number = 10,
-  search: string = ""
+  search: string = "",
+  profession: string = "",
+  city: string = "",
+  gender: string = "",
+  date: string = ""
 ): Promise<{
   data: Professional[];
   totalCount: number;
@@ -86,11 +90,15 @@ const fetchWaitingProfessionals = async (
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
-      ...(search && { search })
+      ...(search && { search }),
+      ...(profession && { profession }),
+      ...(city && { city }),
+      ...(gender && { gender }),
+      ...(date && { date }),
     });
 
     const response = await axiosInstance.get(`/professionaluser/waiting?${params}`);
-    
+
     if (response.data.success) {
       return {
         data: response.data.data || [],
@@ -101,7 +109,7 @@ const fetchWaitingProfessionals = async (
         hasPrevPage: response.data.pagination?.hasPrevPage || false
       };
     }
-    
+
     return {
       data: [],
       totalCount: 0,
@@ -119,100 +127,117 @@ const fetchWaitingProfessionals = async (
 
 
 export default function WaitingProfessionalsTable() {
-  
+
   // State management
   const [data, setData] = useState<Professional[]>([]);
   const [initialLoading, setInitialLoading] = useState(true); // For first load
   const [searchLoading, setSearchLoading] = useState(false); // For search/pagination
   const [error, setError] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
-  
+  const [resetFilters, setResetFilters] = useState<boolean>(false);
+
+
+
+  const [filterOptions, setFilterOptions] = useState({
+    professions: [],
+    cities: [],
+    genders: [],
+    dates: []
+  })
+
+  const [selectedProfession, setSelectedProfession] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedGender, setSelectedGender] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+
+  console.log(filterOptions, selectedProfession, selectedCity, selectedGender, selectedDate, 'hi from data')
+
   // Column definitions
   const columns: ColumnDef<Professional>[] = useMemo(() => [
-  { 
-    accessorKey: "_id", 
-    header: "Waiting ID",
-    cell: info => {
-      const id = info.getValue() as string;
-      return id.substring(id.length - 6); // Show last 6 characters of ObjectId
-    }
-  },
-  { 
-    accessorKey: "First Name", 
-    header: "Name",
-    cell: info => {
-      const row = info.row.original;
-      return `${row["First Name"]} ${row["Middle Name"] || ""} ${row["Last Name"]}`.trim();
-    }
-  },
-  { accessorKey: "City", header: "City" },
-  { accessorKey: "Profession", header: "Profession" },
-  { 
-    accessorKey: "createdAt", 
-    header: "Submitted Date",
-    cell: info => {
-      const date = new Date(info.getValue() as string);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    }
-  },
-  { accessorKey: "Gender", header: "Gender" },
-  {
-    accessorKey: "Headshot",
-    header: "Headshot",
-    cell: info => (
-      <Image
-        src={info.getValue() as string || "/images/defaultlogo.png"}
-        alt="headshot"
-        width={32}
-        height={32}
-        className="w-8 h-8 rounded-full mx-auto object-cover"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = "/images/defaultlogo.png";
-        }}
-      />
-    ),
-  },
-  {
-    id: "action",
-    header: "Action",
-    
-    cell: (info) => {
-      const row=info.row.original;
-  return ( 
-  <button type="button" className="bg-primary hover:bg-red-700  transition-colors duration-300 p-2 rounded-full">
-       <Link href={`/waiting-professionals/${row.Phone}`}>
-      <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="15"
-    height="16"
-    viewBox="0 0 15 16"
-    fill="none"
-  >
-    <path
-      d="M9.375 7.80768C9.375 8.30496 9.17746 8.78187 8.82583 9.1335C8.47419 9.48513 7.99728 9.68268 7.5 9.68268C7.00272 9.68268 6.52581 9.48513 6.17417 9.1335C5.82254 8.78187 5.625 8.30496 5.625 7.80768C5.625 7.3104 5.82254 6.83348 6.17417 6.48185C6.52581 6.13022 7.00272 5.93268 7.5 5.93268C7.99728 5.93268 8.47419 6.13022 8.82583 6.48185C9.17746 6.83348 9.375 7.3104 9.375 7.80768Z"
-      stroke="white"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M1.25 7.80768C2.25 5.24705 4.585 3.43268 7.5 3.43268C10.415 3.43268 12.75 5.24705 13.75 7.80768C12.75 10.3683 10.415 12.1827 7.5 12.1827C4.585 12.1827 2.25 10.3683 1.25 7.80768Z"
-      stroke="white"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-       </Link>
-      </button>
-      )
+    {
+      accessorKey: "_id",
+      header: "Waiting ID",
+      cell: info => {
+        const id = info.getValue() as string;
+        return id.substring(id.length - 6); // Show last 6 characters of ObjectId
+      }
     },
-  },
-],[]);
+    {
+      accessorKey: "First Name",
+      header: "Name",
+      cell: info => {
+        const row = info.row.original;
+        return `${row["First Name"]} ${row["Middle Name"] || ""} ${row["Last Name"]}`.trim();
+      }
+    },
+    { accessorKey: "City", header: "City" },
+    { accessorKey: "Profession", header: "Profession" },
+    {
+      accessorKey: "createdAt",
+      header: "Submitted Date",
+      cell: info => {
+        const date = new Date(info.getValue() as string);
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    },
+    { accessorKey: "Gender", header: "Gender" },
+    {
+      accessorKey: "Headshot",
+      header: "Headshot",
+      cell: info => (
+        <Image
+          src={info.getValue() as string || "/images/defaultlogo.png"}
+          alt="headshot"
+          width={32}
+          height={32}
+          className="w-8 h-8 rounded-full mx-auto object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/images/defaultlogo.png";
+          }}
+        />
+      ),
+    },
+    {
+      id: "action",
+      header: "Action",
+
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <button type="button" className="bg-primary hover:bg-red-700  transition-colors duration-300 p-2 rounded-full">
+            <Link href={`/waiting-professionals/${row.Phone}`}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="16"
+                viewBox="0 0 15 16"
+                fill="none"
+              >
+                <path
+                  d="M9.375 7.80768C9.375 8.30496 9.17746 8.78187 8.82583 9.1335C8.47419 9.48513 7.99728 9.68268 7.5 9.68268C7.00272 9.68268 6.52581 9.48513 6.17417 9.1335C5.82254 8.78187 5.625 8.30496 5.625 7.80768C5.625 7.3104 5.82254 6.83348 6.17417 6.48185C6.52581 6.13022 7.00272 5.93268 7.5 5.93268C7.99728 5.93268 8.47419 6.13022 8.82583 6.48185C9.17746 6.83348 9.375 7.3104 9.375 7.80768Z"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M1.25 7.80768C2.25 5.24705 4.585 3.43268 7.5 3.43268C10.415 3.43268 12.75 5.24705 13.75 7.80768C12.75 10.3683 10.415 12.1827 7.5 12.1827C4.585 12.1827 2.25 10.3683 1.25 7.80768Z"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </button>
+        )
+      },
+    },
+  ], []);
 
 
   // Server-side pagination state
@@ -225,7 +250,7 @@ export default function WaitingProfessionalsTable() {
 
   // Debounced search to avoid too many API calls
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(globalFilter);
@@ -243,13 +268,17 @@ export default function WaitingProfessionalsTable() {
         setSearchLoading(true);
       }
       setError(null);
-      
+
       const result = await fetchWaitingProfessionals(
         pagination.pageIndex + 1, // API expects 1-based page numbers
         pagination.pageSize,
-        debouncedSearch
+        debouncedSearch,
+        selectedProfession,
+        selectedCity,
+        selectedGender,
+        selectedDate
       );
-      
+
       setData(result.data);
       setTotalCount(result.totalCount);
       setTotalPages(result.totalPages);
@@ -264,12 +293,28 @@ export default function WaitingProfessionalsTable() {
         setSearchLoading(false);
       }
     }
-  },[pagination.pageIndex, pagination.pageSize, debouncedSearch]);
+  }, [pagination.pageIndex, pagination.pageSize, debouncedSearch, selectedProfession, selectedCity, selectedGender, selectedDate]);
 
   // Load data on first mount
   useEffect(() => {
     loadData(true);
   }, []);
+
+  //load filter data
+  useEffect(() => {
+    console.log('i am calling right')
+    axiosInstance.get("/professionaluser/filters")
+      .then(res => setFilterOptions(res.data))
+      .catch(() => setFilterOptions({ professions: [], cities: [], genders: [], dates: [] }));
+  }, []);
+
+  //reseting filter
+  useEffect(() => {
+  if (resetFilters) {
+    loadData(false);
+    setResetFilters(false); // reset the flag
+  }
+}, [selectedProfession, selectedCity, selectedGender, selectedDate, globalFilter, resetFilters]);
 
   // Load data when pagination or search changes (not initial load)
   useEffect(() => {
@@ -287,9 +332,9 @@ export default function WaitingProfessionalsTable() {
   const table = useReactTable({
     data,
     columns,
-    state: { 
+    state: {
       globalFilter,
-      pagination 
+      pagination
     },
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
@@ -299,7 +344,7 @@ export default function WaitingProfessionalsTable() {
     pageCount: totalPages,  // Tell table how many pages exist
   });
 
-  console.log('table is here',table);
+  console.log('table is here', table);
 
   const pageIndex = table.getState().pagination.pageIndex;
   console.log(pageIndex)
@@ -353,85 +398,130 @@ export default function WaitingProfessionalsTable() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2">
       {/* Search bar */}
-      <div className="mb-4 flex flex-col sm:flex-row gap-2">
-        <div className="relative w-full sm:w-1/3">
-          <input
-            value={globalFilter ?? ""}
-            onChange={e => setGlobalFilter(e.target.value)}
-            placeholder="Search professionals..."
-            className="border rounded px-3 py-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 pr-8"
-          />
-          {searchLoading && (
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-            </div>
-          )}
+
+      <div className="flex w-full flex-col justify-between items-center  md:flex-row sm:px-4 ">
+
+        {/* Search bar */}
+        <div className="mb-4 flex grow-1 flex-col sm:flex-row gap-2">
+          <div className="relative w-full sm:w-1/3">
+            <input
+              value={globalFilter ?? ""}
+              onChange={e => setGlobalFilter(e.target.value)}
+              placeholder="Search professionals..."
+              className="border rounded px-3 py-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 pr-8"
+            />
+            {searchLoading && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setGlobalFilter("");
+              setSelectedProfession("");
+              setSelectedCity("");
+              setSelectedGender("");
+              setSelectedDate("");
+              setResetFilters(true);
+              setPagination(prev => ({ ...prev, pageIndex: 0 }));
+            }}
+            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+            disabled={searchLoading}
+          >
+            <RefreshCw className={`w-4 h-4 ${searchLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
         </div>
-        <button
-          onClick={() => loadData(false)}
-          className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-          disabled={searchLoading}
-        >
-          <RefreshCw className={`w-4 h-4 ${searchLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+
+        {/* Filter options */}
+        <div className="mb-4 flex flex-col w-full sm:flex-row gap-2">
+          <select value={selectedProfession} onChange={e => setSelectedProfession(e.target.value)} className=" py-2 rounded border">
+            <option value="">Profession</option>
+            {filterOptions.professions.map((prof: string) => (
+              <option key={prof} value={prof}>{prof}</option>
+            ))}
+          </select>
+          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="px-3 py-2 rounded border">
+            <option value="">City</option>
+            {filterOptions.cities.map((city: string) => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+          <select value={selectedGender} onChange={e => setSelectedGender(e.target.value)} className=" py-2 rounded border">
+            <option value="">Gender</option>
+            {filterOptions.genders.map((gender: string) => (
+              <option key={gender} value={gender}>{gender}</option>
+            ))}
+          </select>
+          <select value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className=" py-2 rounded border">
+            <option value="">Date</option>
+            {filterOptions.dates.map((date: string) => (
+              <option key={date} value={date}>{date}</option>
+            ))}
+          </select>
+          <button onClick={()=>loadData(false)} className=" py-2 bg-red-800 text-white rounded flex items-center gap-2">
+            {/* Add your filter icon here */}
+            Filter
+          </button>
+        </div>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto max-w-full relative" >
         {/* Loading overlay for search/pagination */}
         {searchLoading && (
-          <div className="absolute inset-0 bg-white/70 dark:bg-gray-800/70 flex items-center justify-center z-10 rounded">
+          <div className="absolute inset-0 bg-white/70  dark:bg-gray-800/70 flex items-center justify-center z-10 rounded">
             <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Loading...</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">... Loading</span>
             </div>
           </div>
         )}
         <div className="min-w-max">
           <table className="w-full border-separate border-spacing-y-2 text-sm md:text-base">
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className="bg-red-900 text-white">
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} className="px-2 md:px-3 py-2 text-left whitespace-nowrap">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.length === 0 ? (
-              <tr>
-                <td 
-                  colSpan={columns.length} 
-                  className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
-                >
-                  <div className="flex flex-col items-center justify-center space-y-2">
-                    <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p className="text-lg font-medium">No data found</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500">
-                      {globalFilter ? 'No results match your search criteria.' : 'No professionals are currently waiting for approval.'}
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="bg-red-100 dark:bg-gray-600 dark:text-white">
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="px-2 md:px-3 py-2 whitespace-nowrap">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id} className="bg-red-900 text-white">
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="px-2 md:px-3 py-2 text-left whitespace-nowrap">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
                   ))}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="text-lg font-medium">No data found</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500">
+                        {globalFilter ? 'No results match your search criteria.' : 'No professionals are currently waiting for approval.'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="bg-red-100 dark:bg-gray-600 dark:text-white">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-2 md:px-3 py-2 whitespace-nowrap">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -445,7 +535,7 @@ export default function WaitingProfessionalsTable() {
             className="border border-red-800 rounded-lg w-8 h-8 flex items-center justify-center text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
             aria-label="Previous page"
           >
-           <ChevronLeft className="w-3 h-3"/>
+            <ChevronLeft className="w-3 h-3" />
           </button>
           {getPageNumbers(pageIndex + 1, pageCount).map((num, idx) =>
             typeof num === "number" ? (
@@ -453,11 +543,10 @@ export default function WaitingProfessionalsTable() {
                 type="button"
                 key={`page-${idx}-${num}`}
                 onClick={() => table.setPageIndex(num - 1)}
-                className={`border rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium transition-colors duration-150 ${
-                  pageIndex + 1 === num
+                className={`border rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium transition-colors duration-150 ${pageIndex + 1 === num
                     ? "bg-red-800 text-white border-red-800 dark:bg-red-700 dark:border-red-600"
                     : "bg-white text-red-800 border-red-800 hover:bg-red-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-                }`}
+                  }`}
                 aria-current={pageIndex + 1 === num ? "page" : undefined}
               >
                 {num}
@@ -475,7 +564,7 @@ export default function WaitingProfessionalsTable() {
             className="border border-red-800 text-red-800 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-medium hover:bg-red-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-150"
             aria-label="Next page"
           >
-            <ChevronRight className="w-3 h-3"/>
+            <ChevronRight className="w-3 h-3" />
           </button>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 md:mt-0">
