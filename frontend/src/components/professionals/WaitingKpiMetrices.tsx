@@ -70,7 +70,7 @@ export const WaitingKpiMetrices: React.FC = () => {
           <div className="mt-2 h-6 w-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
         </div>
       ))}
-      </div> // You can replace this with a spinner or skeleton UI
+      </div> 
     )
   }
    
