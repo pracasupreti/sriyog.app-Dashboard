@@ -146,26 +146,90 @@ export const getWaitingProfessionals = async (req, res) => {
     }
 
     // Add search logic (combine with filters)
+    // if (search) {
+    //   // ...existing search logic...
+    //   // Combine with filters using $and
+    //   searchQuery = {
+    //     $and: [
+    //       searchQuery,
+    //       {
+    //         $or: [
+    //           { "First Name": { $regex: search, $options: 'i' } },
+    //           { "Last Name": { $regex: search, $options: 'i' } },
+    //           { "Middle Name": { $regex: search, $options: 'i' } },
+    //           { City: { $regex: search, $options: 'i' } },
+    //           { Profession: { $regex: search, $options: 'i' } },
+    //           { Phone: { $regex: search, $options: 'i' } },
+    //           { Gender: { $regex: search, $options: 'i' } }
+    //         ]
+    //       }
+    //     ]
+    //   };
+    // }
+
     if (search) {
-      // ...existing search logic...
-      // Combine with filters using $and
-      searchQuery = {
-        $and: [
-          searchQuery,
-          {
-            $or: [
-              { "First Name": { $regex: search, $options: 'i' } },
-              { "Last Name": { $regex: search, $options: 'i' } },
-              { "Middle Name": { $regex: search, $options: 'i' } },
-              { City: { $regex: search, $options: 'i' } },
-              { Profession: { $regex: search, $options: 'i' } },
-              { Phone: { $regex: search, $options: 'i' } },
-              { Gender: { $regex: search, $options: 'i' } }
-            ]
-          }
-        ]
-      };
-    }
+			// Split search term into words for better matching
+			const searchWords = search.trim().split(/\s+/);
+			
+			// Create regex patterns that match from beginning of words
+			const createWordBoundaryRegex = (term) => `\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
+			
+			// Create search conditions for individual fields - matching from start of words
+			const fieldSearchConditions = [
+				{ "First Name": { $regex: createWordBoundaryRegex(search), $options: 'i' } },
+				{ "Last Name": { $regex: createWordBoundaryRegex(search), $options: 'i' } },
+				{ "Middle Name": { $regex: createWordBoundaryRegex(search), $options: 'i' } },
+				{ City: { $regex: createWordBoundaryRegex(search), $options: 'i' } },
+				{ Profession: { $regex: createWordBoundaryRegex(search), $options: 'i' } },
+				{ Phone: { $regex: search, $options: 'i' } }, // Phone can match anywhere
+				{ Gender: { $regex: createWordBoundaryRegex(search), $options: 'i' } }
+			];
+
+			// Add full name search using $expr to concatenate fields
+			const fullNameSearch = {
+				$expr: {
+					$regexMatch: {
+						input: {
+							$concat: [
+								{ $ifNull: ["$First Name", ""] },
+								" ",
+								{ $ifNull: ["$Middle Name", ""] },
+								" ",
+								{ $ifNull: ["$Last Name", ""] }
+							]
+						},
+						regex: createWordBoundaryRegex(search),
+						options: "i"
+					}
+				}
+			};
+
+			// Add conditions for each word in the search term
+			const wordSearchConditions = [];
+			searchWords.forEach(word => {
+				if (word.length > 0) {
+					wordSearchConditions.push({
+						$or: [
+							{ "First Name": { $regex: createWordBoundaryRegex(word), $options: 'i' } },
+							{ "Last Name": { $regex: createWordBoundaryRegex(word), $options: 'i' } },
+							{ "Middle Name": { $regex: createWordBoundaryRegex(word), $options: 'i' } },
+							{ City: { $regex: createWordBoundaryRegex(word), $options: 'i' } },
+							{ Profession: { $regex: createWordBoundaryRegex(word), $options: 'i' } }
+						]
+					});
+				}
+			});
+
+			// Combine all search conditions
+			searchQuery = {
+				$or: [
+					...fieldSearchConditions,
+					fullNameSearch,
+					...(wordSearchConditions.length > 1 ? [{ $and: wordSearchConditions }] : wordSearchConditions)
+				]
+			};
+		}
+		
 
     const totalCount = await JoinForm.countDocuments(searchQuery);
     const totalPages = Math.ceil(totalCount / limit);

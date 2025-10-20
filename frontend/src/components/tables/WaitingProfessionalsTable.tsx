@@ -11,6 +11,10 @@ import {
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import ProfessionDropdownInput from "./ProfessionDropdownInput";
+import CityDropdownInput from "./CityDropdownInput";
+import GenderDropdownInput from "./GenderDropdownInput";
+import DateDropdownInput from "./DateDropdownInput";
 
 
 // Simple, ACTUALLY bulletproof pagination helper
@@ -399,11 +403,11 @@ export default function WaitingProfessionalsTable() {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2">
       {/* Search bar */}
 
-      <div className="flex w-full flex-col justify-between items-center  md:flex-row sm:px-4 ">
+      <div className="flex w-full flex-col justify-between items-center  md:flex-row sm:px-4 gap-10">
 
         {/* Search bar */}
-        <div className="mb-4 flex grow-1 flex-col sm:flex-row gap-2">
-          <div className="relative w-full sm:w-1/3">
+        <div className="mb-4 flex  flex-col sm:flex-row gap-2">
+          <div className="relative w-full ">
             <input
               value={globalFilter ?? ""}
               onChange={e => setGlobalFilter(e.target.value)}
@@ -430,25 +434,27 @@ export default function WaitingProfessionalsTable() {
             disabled={searchLoading}
           >
             <RefreshCw className={`w-4 h-4 ${searchLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            {/* Refresh */}
           </button>
         </div>
 
         {/* Filter options */}
-        <div className="mb-4 flex flex-col w-full sm:flex-row gap-2">
-          <select value={selectedProfession} onChange={e => setSelectedProfession(e.target.value)} className=" py-2 rounded border">
+        <div className="mb-4 flex grow-1 flex-col w-full sm:flex-row gap-2 justify-end">
+          {/* <select value={selectedProfession} onChange={e => setSelectedProfession(e.target.value)} className=" py-2 rounded border">
             <option value="">Profession</option>
             {filterOptions.professions.map((prof: string) => (
               <option key={prof} value={prof}>{prof}</option>
             ))}
-          </select>
-          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="px-3 py-2 rounded border">
+          </select> */}
+          <ProfessionDropdownInput Professions={filterOptions.professions} value={selectedProfession} onChange={setSelectedProfession} />
+          {/* <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="px-3 py-2 rounded border">
             <option value="">City</option>
             {filterOptions.cities.map((city: string) => (
               <option key={city} value={city}>{city}</option>
             ))}
-          </select>
-          <select value={selectedGender} onChange={e => setSelectedGender(e.target.value)} className=" py-2 rounded border">
+          </select> */}
+          <CityDropdownInput cities={filterOptions.cities} inputValue={selectedCity} setInputValue={setSelectedCity} />
+          {/* <select value={selectedGender} onChange={e => setSelectedGender(e.target.value)} className=" py-2 rounded border">
             <option value="">Gender</option>
             {filterOptions.genders.map((gender: string) => (
               <option key={gender} value={gender}>{gender}</option>
@@ -459,9 +465,29 @@ export default function WaitingProfessionalsTable() {
             {filterOptions.dates.map((date: string) => (
               <option key={date} value={date}>{date}</option>
             ))}
-          </select>
-          <button onClick={()=>loadData(false)} className=" py-2 bg-red-800 text-white rounded flex items-center gap-2">
+          </select> */}
+          <GenderDropdownInput
+  genders={filterOptions.genders}
+  value={selectedGender}
+  onChange={setSelectedGender}
+/>
+<DateDropdownInput
+  dates={filterOptions.dates}
+  value={selectedDate}
+  onChange={setSelectedDate}
+/>
+          <button onClick={()=>loadData(false)} className=" py-2 px-3 bg-red-800 text-white rounded flex items-center gap-2">
             {/* Add your filter icon here */}
+             <div className="flex items-center  justify-center w-5 h-5 ">
+                        {/* Placeholder image; replace src with real asset */}
+                        <Image
+                          src={'/images/filtericon.svg'}
+                          alt={'filtericon'}
+                          width={48}
+                          height={48}
+                          className="object-contain w-full h-full text-white fill-white "
+                        />
+                      </div>
             Filter
           </button>
         </div>
