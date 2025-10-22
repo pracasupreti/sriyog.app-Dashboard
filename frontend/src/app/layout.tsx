@@ -33,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${outfit.className} dark:bg-gray-900`}>
+    <html lang="en" className="overflow-x-hidden">
+      <body className={`${outfit.className} dark:bg-gray-900 overflow-x-hidden`}>
         <Toaster position='top-right' />
         <ThemeProvider>
           <SidebarProvider>

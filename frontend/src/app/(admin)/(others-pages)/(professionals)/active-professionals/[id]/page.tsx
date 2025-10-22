@@ -63,7 +63,8 @@ useEffect(() => {
         setIsLoading(true);
         setError(null);
         
-        const response = await axiosInstance.get(`/professionaluser/joinforms/${id}`);
+        const response = await axiosInstance.get(`/professionaluser/activeuser/${id}`);
+        console.log(response, 'response from active user')
         setUserData(response.data);
       } catch (err: unknown) {
         console.error("Error fetching professional data:", err);
@@ -107,7 +108,7 @@ useEffect(() => {
               : "We couldn't load the professional details. Please check your connection and try again."
             }
           </p>
-          <Link href="/waiting-professionals">
+          <Link href="/active-professionals">
             <button className="bg-primary hover:bg-red-800 text-white px-6 py-2 rounded-lg font-semibold transition">
               Back to Professionals
             </button>

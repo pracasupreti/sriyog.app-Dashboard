@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 html {
   font-size: 13px; /* Default is usually 16px */
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 @custom-variant dark (&:is(.dark *));

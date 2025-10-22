@@ -1,5 +1,6 @@
 'use client'
 import React from 'react'
+import WaitingProfessionalsTable from "@/components/tables/WaitingProfessionalsTable";
 
 const WaitingProfessionals = () => {
   return (
@@ -10,5 +11,4 @@ const WaitingProfessionals = () => {
   )
 }
 
-import WaitingProfessionalsTable from "@/components/tables/WaitingProfessionalsTable";
 export default WaitingProfessionals

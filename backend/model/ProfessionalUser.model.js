@@ -21,7 +21,7 @@ const ProfessionalUserSchema = new mongoose.Schema(
     },
     topProfessional: {
       type: String,
-      alias: "hello",
+      alias: "Top Pro",
     },
     profession: {
       type: String,
@@ -43,10 +43,21 @@ const ProfessionalUserSchema = new mongoose.Schema(
       type: String,
       alias: "Created Date",
     },
-    activeInApp: {
-      type: String,
-      alias: "Active in App",
-    },
+     "Active in App": { 
+    type: String, 
+    enum: ["Yes", "No", "Suspended", "Terminated", "Others"],
+    default: "No"
+  },
+  "User Type": {
+    type: String,
+    enum: ["Premium", "Professional", "Basic", "Unverified"],
+    default: "Basic"
+  },
+    "User Status": {
+    type: String,
+    enum: ["Online", "Offline"],
+    default: "Online"
+  },
     gender: {
       type: String,
       alias: "Gender",

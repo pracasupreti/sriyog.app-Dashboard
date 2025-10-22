@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function WaitingProf() {
   return (
-    <div className=" w-full min-h-screen mb-6 ">
+    <div className="w-full min-h-screen mb-6">
       {/* <PageBreadcrumb pageTitle="waiting Professionals" /> */}
       <div className="space-y-6">
       <WaitingKpiMetrices />
